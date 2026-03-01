@@ -45,6 +45,7 @@ const Auth = () => {
             const response = await axios.post(url, formData);
             const user = isLogin ? response.data.user : { id: response.data.user_id, ...formData };
             localStorage.setItem('user', JSON.stringify(user));
+            window.dispatchEvent(new Event('user-auth')); // Notify Header of login
             navigate('/donor-dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Une erreur est survenue');
