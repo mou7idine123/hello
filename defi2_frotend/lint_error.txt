@@ -1,0 +1,20 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+C:\Users\hp\Desktop\defi2\frontend\src\App.jsx
+  1:8  error  'React' is defined but never used  no-unused-vars
+
+C:\Users\hp\Desktop\defi2\frontend\src\components\Dashboard.jsx
+  3:28  error  'ExternalLink' is defined but never used  no-unused-vars
+
+C:\Users\hp\Desktop\defi2\frontend\src\components\Hero.jsx
+  23:38  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  23:94  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\hp\Desktop\defi2\frontend\src\components\NeedsCatalog.jsx
+  3:18  error  'UserCheck' is defined but never used  no-unused-vars
+
+??? 5 problems (5 errors, 0 warnings)
+
