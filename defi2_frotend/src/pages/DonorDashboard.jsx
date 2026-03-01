@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { Heart, Activity, CheckCircle, Bell, ExternalLink, Image as ImageIcon, Clock, CheckCircle2, ShieldCheck, Upload } from 'lucide-react';
+import { Heart, Activity, CheckCircle, Bell, ExternalLink, Image as ImageIcon, Clock, CheckCircle2, ShieldCheck, Upload, ArrowLeft } from 'lucide-react';
 
 const DonorDashboard = () => {
     const [summary, setSummary] = useState({
@@ -78,7 +78,13 @@ const DonorDashboard = () => {
     return (
         <section className="section bg-background" style={{ minHeight: 'calc(100vh - 70px)' }}>
             <div className="container">
-                <h2 className="section-title" style={{ marginBottom: '2rem', textAlign: 'left' }}>Mon Espace Donateur</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <h2 className="section-title" style={{ margin: 0, textAlign: 'left' }}>Mon Espace Donateur</h2>
+                    <Link to="/" className="btn btn-outline flex items-center gap-2" style={{ padding: '0.5rem 1.25rem', borderRadius: '99px', fontWeight: '600', borderColor: 'var(--primary)', color: 'var(--primary)', transition: 'all 0.3s' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--primary)'; e.currentTarget.style.color = 'white'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = 'var(--primary)'; }}>
+                        <ArrowLeft size={18} />
+                        <span>Retour à l'accueil</span>
+                    </Link>
+                </div>
 
                 {/* Personal Summary */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
