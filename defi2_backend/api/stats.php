@@ -16,17 +16,17 @@ $stats = [
 
 if($db){
     try {
-        // Structures de requête prêtes pour l'intégration en équipe :
-        // Exemples : 
-        // $stmt = $db->query("SELECT SUM(families_helped) AS helped, SUM(total_mru) AS mru, COUNT(id) AS donations FROM stats");
-        // $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        // if($row) { 
-        //      $stats['families_helped'] = $row['helped'] ?? 0;
-        //      $stats['mru_collected'] = $row['mru'] ?? 0;
-        //      $stats['confirmed_donations'] = $row['donations'] ?? 0;
-        // }
+        // Calculate real stats
+        $stats['families_helped'] = (int) $db->query("SELECT SUM(beneficiaries) FROM needs WHERE status IN ('Confirmed')")->fetchColumn();
+        $stats['mru_collected'] = (int) $db->query("SELECT SUM(amount) FROM donations WHERE status = 'Remis'")->fetchColumn();
+        $stats['confirmed_donations'] = (int) $db->query("SELECT COUNT(*) FROM donations WHERE status IN ('Vérifié', 'Remis')")->fetchColumn();
+
+        // Fetch active announcements
+        $stmt = $db->query("SELECT * FROM announcements WHERE is_active = 1 ORDER BY created_at DESC");
+        $stats['announcements'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     } catch(PDOException $e) {
-        // Repli silencieux vers les tableaux par défaut si les tables sont manquantes
+        // Silently fallback if anything goes wrong
     }
 }
 

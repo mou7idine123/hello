@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { UserPlus, LogIn } from 'lucide-react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 const Auth = () => {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const mode = searchParams.get('mode');
     const [isLogin, setIsLogin] = useState(mode === 'login');
@@ -41,12 +43,40 @@ const Auth = () => {
             ? 'http://localhost:8000/api/login.php'
             : 'http://localhost:8000/api/register.php';
 
+        const dataToSend = {
+            ...formData,
+            email: formData.email.trim(),
+            password: formData.password.trim(),
+            full_name: formData.full_name.trim()
+        };
+
         try {
-            const response = await axios.post(url, formData);
-            const user = isLogin ? response.data.user : { id: response.data.user_id, ...formData };
+            const response = await axios.post(url, dataToSend);
+            let user;
+            if (isLogin) {
+                user = response.data.user;
+            } else {
+                user = {
+                    id: response.data.user_id,
+                    full_name: dataToSend.full_name,
+                    email: dataToSend.email,
+                    phone: dataToSend.phone,
+                    role: 'donor',
+                    is_anonymous: dataToSend.is_anonymous
+                };
+            }
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+            }
             localStorage.setItem('user', JSON.stringify(user));
             window.dispatchEvent(new Event('user-auth')); // Notify Header of login
-            navigate('/donor-dashboard');
+            if (user.role === 'admin') {
+                navigate('/admin/dashboard');
+            } else if (user.role === 'partner') {
+                navigate('/partner/dashboard');
+            } else {
+                navigate('/donor-dashboard');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Une erreur est survenue');
         } finally {
@@ -59,7 +89,7 @@ const Auth = () => {
             <div className="container" style={{ maxWidth: '450px' }}>
                 <div className="dashboard-panel" style={{ marginTop: '2rem' }}>
                     <h2 className="section-title" style={{ marginBottom: '1.5rem', fontSize: '1.75rem' }}>
-                        {isLogin ? 'Connexion Donateur' : 'Inscription Donateur'}
+                        {isLogin ? t('auth.loginTitle') : t('auth.registerTitle')}
                     </h2>
 
                     {error && (
@@ -70,28 +100,30 @@ const Auth = () => {
 
                     <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                         <button
+                            type="button"
                             className={`btn w-full ${isLogin ? 'btn-primary' : 'btn-outline'}`}
                             onClick={() => setIsLogin(true)}
                         >
-                            <LogIn size={18} /> Connexion
+                            <LogIn size={18} /> {t('header.login')}
                         </button>
                         <button
+                            type="button"
                             className={`btn w-full ${!isLogin ? 'btn-primary' : 'btn-outline'}`}
                             onClick={() => setIsLogin(false)}
                         >
-                            <UserPlus size={18} /> Inscription
+                            <UserPlus size={18} /> {t('header.register')}
                         </button>
                     </div>
 
                     <form className="auth-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         {!isLogin && (
                             <div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>Nom complet</label>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>{t('auth.fullName')}</label>
                                 <input
                                     type="text"
                                     name="full_name"
                                     className="filter-select w-full"
-                                    placeholder="Ex: Ali Oumar"
+                                    placeholder={t('auth.fullNamePlaceholder')}
                                     required
                                     value={formData.full_name}
                                     onChange={handleInputChange}
@@ -100,12 +132,12 @@ const Auth = () => {
                         )}
 
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>Email</label>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>{t('auth.email')}</label>
                             <input
                                 type="email"
                                 name="email"
                                 className="filter-select w-full"
-                                placeholder="votre@email.com"
+                                placeholder={t('auth.emailPlaceholder')}
                                 required
                                 value={formData.email}
                                 onChange={handleInputChange}
@@ -113,12 +145,12 @@ const Auth = () => {
                         </div>
 
                         <div>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>Mot de passe</label>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>{t('auth.password')}</label>
                             <input
                                 type="password"
                                 name="password"
                                 className="filter-select w-full"
-                                placeholder="••••••••"
+                                placeholder={t('auth.passwordPlaceholder')}
                                 required
                                 value={formData.password}
                                 onChange={handleInputChange}
@@ -128,12 +160,12 @@ const Auth = () => {
                         {!isLogin && (
                             <>
                                 <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>Téléphone (optionnel)</label>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, fontSize: '0.875rem' }}>{t('auth.phone')}</label>
                                     <input
                                         type="tel"
                                         name="phone"
                                         className="filter-select w-full"
-                                        placeholder="+222 XX XX XX XX"
+                                        placeholder={t('auth.phonePlaceholder')}
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                     />
@@ -149,7 +181,7 @@ const Auth = () => {
                                         onChange={handleInputChange}
                                     />
                                     <label htmlFor="anonymous" style={{ color: 'var(--text-muted)', fontSize: '0.875rem', cursor: 'pointer' }}>
-                                        Je veux rester anonyme lors de mes dons
+                                        {t('auth.anonymous')}
                                     </label>
                                 </div>
                             </>
@@ -157,12 +189,12 @@ const Auth = () => {
 
                         {isLogin && (
                             <div style={{ textAlign: 'right', fontSize: '0.875rem' }}>
-                                <a href="#" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Mot de passe oublié ?</a>
+                                <a href="#" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{t('auth.forgotPassword')}</a>
                             </div>
                         )}
 
                         <button type="submit" className="btn btn-primary w-full" style={{ marginTop: '1rem' }} disabled={loading}>
-                            {loading ? 'Chargement...' : (isLogin ? 'Se connecter' : "Créer mon compte")}
+                            {loading ? t('auth.loading') : (isLogin ? t('auth.connectBtn') : t('auth.registerBtn'))}
                         </button>
                     </form>
                 </div>

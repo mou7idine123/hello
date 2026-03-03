@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../config/Database.php';
+require_once '../config/JwtHandler.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -29,8 +30,17 @@ if ($db && !empty($data->full_name) && !empty($data->email) && !empty($data->pas
         $stmt->bindParam(':is_anonymous', $data->is_anonymous, PDO::PARAM_BOOL);
 
         if ($stmt->execute()) {
+            $user_id = $db->lastInsertId();
+            $jwt = new JwtHandler();
+            $token = $jwt->encode([
+                "id" => $user_id,
+                "role" => 'donor',
+                "email" => $data->email,
+                "full_name" => $data->full_name
+            ]);
+
             http_response_code(201);
-            echo json_encode(array("message" => "User was created.", "user_id" => $db->lastInsertId()));
+            echo json_encode(array("message" => "User was created.", "token" => $token, "user_id" => $user_id));
         } else {
             http_response_code(503);
             echo json_encode(array("message" => "Unable to create user."));

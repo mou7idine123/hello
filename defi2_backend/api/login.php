@@ -9,6 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../config/Database.php';
+require_once '../config/JwtHandler.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -17,7 +18,7 @@ $data = json_decode(file_get_contents("php://input"));
 
 if ($db && !empty($data->email) && !empty($data->password)) {
     try {
-        $query = "SELECT id, full_name, email, password, phone, is_anonymous FROM users WHERE email = :email LIMIT 0,1";
+        $query = "SELECT id, full_name, email, password, phone, role, is_anonymous FROM users WHERE email = :email LIMIT 0,1";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':email', $data->email);
         $stmt->execute();
@@ -26,8 +27,17 @@ if ($db && !empty($data->email) && !empty($data->password)) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if (password_verify($data->password, $row['password'])) {
                 unset($row['password']); // Don't send password back
+                
+                $jwt = new JwtHandler();
+                $token = $jwt->encode([
+                    "id" => $row['id'],
+                    "role" => $row['role'],
+                    "email" => $row['email'],
+                    "full_name" => $row['full_name']
+                ]);
+
                 http_response_code(200);
-                echo json_encode(array("message" => "Login successful.", "user" => $row));
+                echo json_encode(array("message" => "Login successful.", "token" => $token, "user" => $row));
             } else {
                 http_response_code(401);
                 echo json_encode(array("message" => "Login failed. Invalid password."));

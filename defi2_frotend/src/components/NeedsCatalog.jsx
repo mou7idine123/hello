@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { MapPin, ShieldCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const NeedsCatalog = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [needs, setNeeds] = useState([]);
     const [filterType, setFilterType] = useState('All');
@@ -31,7 +33,7 @@ const NeedsCatalog = () => {
     return (
         <section className="section bg-white" id="needs">
             <div className="container">
-                <h2 className="section-title">Catalogue des besoins vérifiés</h2>
+                <h2 className="section-title">{t('catalog.title')}</h2>
 
                 {/* Filters Section */}
                 <div className="filters">
@@ -90,8 +92,8 @@ const NeedsCatalog = () => {
                                         />
                                     </div>
                                     <div className="progress-stats">
-                                        <span className="text-muted">{need.collected_mru.toLocaleString()} MRU collectés</span>
-                                        <span style={{ color: "var(--secondary)", fontWeight: 700 }}>{need.required_mru.toLocaleString()} MRU</span>
+                                        <span className="text-muted">{need.collected_mru.toLocaleString()} {t('dashboard.mru')} {t('catalog.collected').split(' ')[0]}</span>
+                                        <span style={{ color: "var(--secondary)", fontWeight: 700 }}>{need.required_mru.toLocaleString()} {t('dashboard.mru')}</span>
                                     </div>
                                 </div>
 
