@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import { Heart, Activity, CheckCircle, Bell, ExternalLink, Image as ImageIcon, Clock, CheckCircle2, ShieldCheck, Upload, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,7 +23,7 @@ const DonorDashboard = () => {
 
         const fetchData = async () => {
             try {
-                const res = await axios.get(`http://localhost:8000/api/user_donations.php?user_id=${user.id}`);
+                const res = await api.get(`/user_donations.php`);
                 const donations = res.data;
                 setCurrentDonations(donations);
 
@@ -66,9 +66,10 @@ const DonorDashboard = () => {
             case 'Vérifié':
                 return <span className="badge badge-success" style={{ backgroundColor: '#d4edda', color: '#155724' }}><ShieldCheck size={12} className="inline mr-1" /> {transStatus}</span>;
             case 'Remis':
-                return <span className="badge badge-success" style={{ backgroundColor: '#d4edda', color: '#155724' }}><CheckCircle2 size={12} className="inline mr-1" /> {transStatus}</span>;
+            case 'complete':
+                return <span className="badge badge-success" style={{ backgroundColor: '#d4edda', color: '#155724' }}><CheckCircle2 size={12} className="inline mr-1" /> {status === 'complete' ? 'Livré / Terminé' : transStatus}</span>;
             default:
-                return <span className="badge">{status}</span>;
+                return <span className="badge" style={{ backgroundColor: '#f8fafc', color: 'var(--text-muted)' }}>{status}</span>;
         }
     };
 
@@ -126,6 +127,11 @@ const DonorDashboard = () => {
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{parseFloat(don.amount).toLocaleString()} {t('dashboard.mru')}</div>
                                             <div>{getStatusBadge(don.status)}</div>
+                                            {don.sha256_hash && (
+                                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px', fontFamily: 'monospace', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={don.sha256_hash}>
+                                                    HASH: {don.sha256_hash.substring(0, 10)}...
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

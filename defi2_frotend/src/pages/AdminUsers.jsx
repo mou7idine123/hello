@@ -1,99 +1,132 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
-import { Users, UserX, Shield, Briefcase, CheckCircle } from 'lucide-react';
+import AdminLayout from '../components/AdminLayout';
+import { Users, UserX, Shield, Briefcase, CheckCircle, Search } from 'lucide-react';
 
 const AdminUsers = () => {
     const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [roleFilter, setRoleFilter] = useState('all');
 
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    useEffect(() => { fetchUsers(); }, []);
 
     const fetchUsers = async () => {
         try {
             const res = await api.get('/admin/users.php');
             setUsers(res.data);
-            setLoading(false);
         } catch (error) {
             console.error("Error fetching users", error);
+        } finally {
             setLoading(false);
         }
     };
 
     const toggleStatus = async (id, currentStatus) => {
         try {
-            await api.put('/admin/users.php', {
-                user_id: id,
-                action: 'toggle_status',
-                is_active: !currentStatus
-            });
+            await api.put('/admin/users.php', { user_id: id, action: 'toggle_status', is_active: !currentStatus });
             fetchUsers();
-        } catch (error) {
-            console.error("Error toggling status", error);
-        }
+        } catch (error) { console.error("Error toggling status", error); }
     };
 
     const changeRole = async (id, newRole) => {
         try {
-            await api.put('/admin/users.php', {
-                user_id: id,
-                action: 'change_role',
-                new_role: newRole
-            });
+            await api.put('/admin/users.php', { user_id: id, action: 'change_role', new_role: newRole });
             fetchUsers();
-        } catch (error) {
-            console.error("Error changing role", error);
-        }
+        } catch (error) { console.error("Error changing role", error); }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Chargement des utilisateurs...</div>;
+    const getRoleBadge = (role) => {
+        const map = {
+            admin: { cls: 'admin-badge-purple', label: 'Admin' },
+            validator: { cls: 'admin-badge-blue', label: 'Validateur' },
+            partner: { cls: 'admin-badge-green', label: 'Partenaire' },
+            donor: { cls: 'admin-badge-gray', label: 'Donneur' },
+        };
+        const r = map[role] || { cls: 'admin-badge-gray', label: role };
+        return <span className={`admin-badge ${r.cls}`}>{r.label}</span>;
+    };
+
+    const filtered = users.filter(u => {
+        const matchSearch = u.full_name.toLowerCase().includes(search.toLowerCase()) ||
+            u.email.toLowerCase().includes(search.toLowerCase());
+        const matchRole = roleFilter === 'all' || u.role === roleFilter;
+        return matchSearch && matchRole;
+    });
+
+    if (loading) return (
+        <AdminLayout>
+            <div className="admin-loading">
+                <div className="admin-spinner" />
+                <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Chargement des utilisateurs…</span>
+            </div>
+        </AdminLayout>
+    );
 
     return (
-        <div className="container" style={{ padding: '2rem 1rem', maxWidth: '1200px', margin: '0 auto' }}>
-            <h1 style={{ fontSize: '2rem', marginBottom: '2rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <Users /> Gestion des Utilisateurs
-            </h1>
+        <AdminLayout>
+            <div className="admin-page-header">
+                <div>
+                    <h1><Users size={24} /> Gestion des Utilisateurs</h1>
+                    <p className="admin-page-subtitle">{users.length} utilisateurs enregistrés</p>
+                </div>
+            </div>
 
-            <div style={{ backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden' }}>
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                <div style={{ position: 'relative', flex: '1', maxWidth: '320px' }}>
+                    <Search size={16} style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                    <input
+                        type="text"
+                        className="admin-input"
+                        placeholder="Rechercher par nom ou email…"
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        style={{ paddingLeft: '2.5rem' }}
+                    />
+                </div>
+                <select className="admin-role-select" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={{ minWidth: '160px' }}>
+                    <option value="all">Tous les rôles</option>
+                    <option value="donor">Donneurs</option>
+                    <option value="validator">Validateurs</option>
+                    <option value="partner">Partenaires</option>
+                    <option value="admin">Admins</option>
+                </select>
+            </div>
+
+            <div className="admin-table-container">
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                        <thead style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
+                    <table className="admin-table">
+                        <thead>
                             <tr>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Nom</th>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Email</th>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Rôle</th>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Stats</th>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Statut</th>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Inscrit le</th>
-                                <th style={{ padding: '1rem', color: '#475569', fontWeight: '600', textAlign: 'right' }}>Actions</th>
+                                <th>Utilisateur</th>
+                                <th>Email</th>
+                                <th>Rôle</th>
+                                <th>Statistiques</th>
+                                <th>Statut</th>
+                                <th>Inscrit le</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {users.map(u => (
-                                <tr key={u.id} style={{ borderBottom: '1px solid #E2E8F0', backgroundColor: u.is_active ? 'white' : '#FEF2F2' }}>
-                                    <td style={{ padding: '1rem' }}>
-                                        <div style={{ fontWeight: '500', color: '#1E293B' }}>{u.full_name}</div>
+                            {filtered.map(u => (
+                                <tr key={u.id} className={!u.is_active ? 'row-suspended' : ''}>
+                                    <td>
+                                        <div className="cell-bold">{u.full_name}</div>
                                         {u.role === 'partner' && u.partner_details && (
-                                            <div style={{ fontSize: '0.875rem', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                                                <Briefcase size={14} /> {u.partner_details.business_name} ({u.partner_details.location})
+                                            <div className="cell-muted" style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                                <Briefcase size={12} /> {u.partner_details.business_name} ({u.partner_details.location})
                                             </div>
                                         )}
                                     </td>
-                                    <td style={{ padding: '1rem', color: '#64748B' }}>{u.email}</td>
-                                    <td style={{ padding: '1rem' }}>
+                                    <td className="cell-muted">{u.email}</td>
+                                    <td>
                                         <select
+                                            className="admin-role-select"
                                             value={u.role}
                                             onChange={(e) => changeRole(u.id, e.target.value)}
-                                            style={{
-                                                padding: '0.5rem',
-                                                borderRadius: '0.5rem',
-                                                border: '1px solid #CBD5E1',
-                                                backgroundColor: '#F8FAFC',
-                                                color: '#334155'
-                                            }}
                                         >
                                             <option value="donor">Donneur</option>
                                             <option value="validator">Validateur</option>
@@ -101,49 +134,33 @@ const AdminUsers = () => {
                                             <option value="admin">Admin</option>
                                         </select>
                                     </td>
-                                    <td style={{ padding: '1rem', color: '#64748B', fontSize: '0.875rem' }}>
+                                    <td>
                                         {u.role === 'validator' && (
-                                            <div>
-                                                <div>Score: <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{u.reputation_score}</span></div>
-                                                <div>Livr. Confirmées: <span style={{ fontWeight: 'bold' }}>{u.confirmed_deliveries || 0}</span></div>
+                                            <div style={{ fontSize: '0.8125rem' }}>
+                                                <div>Score: <strong style={{ color: 'var(--primary)' }}>{u.reputation_score}</strong></div>
+                                                <div className="cell-muted">Livraisons: <strong>{u.confirmed_deliveries || 0}</strong></div>
                                             </div>
                                         )}
                                         {u.role === 'partner' && u.partner_details && (
-                                            <div>Commandes: <span style={{ fontWeight: 'bold', color: 'var(--success)' }}>{u.partner_details.orders_processed || 0}</span></div>
+                                            <div style={{ fontSize: '0.8125rem' }}>
+                                                Commandes: <strong style={{ color: 'var(--emerald)' }}>{u.partner_details.orders_processed || 0}</strong>
+                                            </div>
                                         )}
-                                        {u.role === 'donor' && '-'}
-                                        {u.role === 'admin' && '-'}
+                                        {(u.role === 'donor' || u.role === 'admin') && <span className="cell-muted">—</span>}
                                     </td>
-                                    <td style={{ padding: '1rem' }}>
-                                        <span style={{
-                                            display: 'inline-flex', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: '500',
-                                            backgroundColor: u.is_active ? '#D1FAE5' : '#FEE2E2',
-                                            color: u.is_active ? '#059669' : '#DC2626'
-                                        }}>
+                                    <td>
+                                        <span className={`admin-badge ${u.is_active ? 'admin-badge-solid-green' : 'admin-badge-solid-red'}`}>
                                             {u.is_active ? 'Actif' : 'Suspendu'}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '1rem', color: '#64748B', fontSize: '0.875rem' }}>
-                                        {new Date(u.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                    <td className="cell-muted">{new Date(u.created_at).toLocaleDateString()}</td>
+                                    <td style={{ textAlign: 'right' }}>
                                         {u.role !== 'admin' && (
                                             <button
+                                                className={`admin-btn-sm ${u.is_active ? 'admin-btn-danger' : 'admin-btn-success'}`}
                                                 onClick={() => toggleStatus(u.id, u.is_active)}
-                                                style={{
-                                                    padding: '0.5rem 1rem',
-                                                    borderRadius: '0.5rem',
-                                                    border: 'none',
-                                                    cursor: 'pointer',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.5rem',
-                                                    backgroundColor: u.is_active ? '#FEF2F2' : '#F0FDF4',
-                                                    color: u.is_active ? '#DC2626' : '#16A34A'
-                                                }}
                                             >
-                                                {u.is_active ? <UserX size={16} /> : <CheckCircle size={16} />}
-                                                {u.is_active ? "Suspendre" : "Réactiver"}
+                                                {u.is_active ? <><UserX size={14} /> Suspendre</> : <><CheckCircle size={14} /> Réactiver</>}
                                             </button>
                                         )}
                                     </td>
@@ -153,7 +170,7 @@ const AdminUsers = () => {
                     </table>
                 </div>
             </div>
-        </div>
+        </AdminLayout>
     );
 };
 

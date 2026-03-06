@@ -1,10 +1,5 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+require_once __DIR__ . '/../config/cors.php';if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
@@ -64,8 +59,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt->bindParam(':order_id', $order_id);
     
     if ($stmt->execute()) {
+        // If status is 'pret_pour_collecte', notify the validator (Phase 3 transition)
+        if ($status === 'pret_pour_collecte') {
+            try {
+                // 1. Get need_id, partner business_name and validator user_id
+                $infoQuery = "SELECT po.need_id, p.business_name, n.type as need_type, u.id as validator_uid
+                             FROM partner_orders po
+                             JOIN partners p ON po.partner_id = p.id
+                             JOIN needs n ON po.need_id = n.id
+                             JOIN users u ON n.validator_name = u.full_name
+                             WHERE po.id = :order_id";
+                $infoStmt = $db->prepare($infoQuery);
+                $infoStmt->execute([':order_id' => $order_id]);
+                $info = $infoStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($info) {
+                    $notifQuery = "INSERT INTO notifications (user_id, title, message, type, related_id, related_type) 
+                                 VALUES (:uid, :title, :msg, 'success', :rid, 'order')";
+                    $notifStmt = $db->prepare($notifQuery);
+                    $notifStmt->execute([
+                        ':uid' => $info['validator_uid'],
+                        ':title' => "Aide prête de collecte",
+                        ':msg' => "Le partenaire " . $info['business_name'] . " a marqué l'aide comme 'pret_pour_collecte'. Vous pouvez venir la récupérer.",
+                        ':rid' => $order_id
+                    ]);
+                }
+            } catch (Exception $e) {
+                // Log error but don't fail the order update
+                error_log("Notification failed: " . $e->getMessage());
+            }
+        }
         echo json_encode(["message" => "Order updated successfully."]);
-    } else {
+    }
+ else {
         http_response_code(500);
         echo json_encode(["message" => "Failed to update order."]);
     }

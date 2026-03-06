@@ -58,100 +58,56 @@ const NotificationBell = () => {
     };
 
     return (
-        <div style={{ position: 'relative' }} ref={dropdownRef}>
+        <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                style={{
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    padding: '0.5rem',
-                    color: '#64748B',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
+                className="p-2 text-text-muted hover:text-primary transition-all relative flex items-center justify-center bg-transparent border-none cursor-pointer"
             >
                 <Bell size={24} />
                 {unreadCount > 0 && (
-                    <span style={{
-                        position: 'absolute',
-                        top: '0',
-                        right: '0',
-                        backgroundColor: '#EF4444',
-                        color: 'white',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '2px solid white'
-                    }}>
+                    <span className="absolute top-1.5 right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
                         {unreadCount}
                     </span>
                 )}
             </button>
 
             {isOpen && (
-                <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: '0',
-                    marginTop: '0.5rem',
-                    width: '320px',
-                    backgroundColor: 'white',
-                    borderRadius: '0.75rem',
-                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-                    border: '1px solid #E2E8F0',
-                    zIndex: 50,
-                    overflow: 'hidden'
-                }}>
-                    <div style={{ padding: '1rem', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F8FAFC' }}>
-                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: '#0F172A' }}>Notifications</h3>
+                <div className="absolute top-full right-0 mt-3 w-80 glass rounded-2xl shadow-premium z-50 overflow-hidden border-border animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="p-4 border-b border-border flex justify-between items-center bg-white/50">
+                        <h3 className="text-sm font-bold text-text-main">Notifications</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllAsRead}
-                                style={{ fontSize: '0.75rem', color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}
+                                className="text-xs font-bold text-primary hover:text-primary-dark transition-colors bg-transparent border-none cursor-pointer"
                             >
                                 Tout marquer lu
                             </button>
                         )}
                     </div>
 
-                    <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                    <div className="max-h-[400px] overflow-y-auto">
                         {notifications.length === 0 ? (
-                            <div style={{ padding: '2rem 1rem', textAlign: 'center', color: '#64748B', fontSize: '0.875rem' }}>
+                            <div className="p-10 text-center text-text-muted text-sm font-medium">
                                 Aucune notification.
                             </div>
                         ) : (
                             notifications.map(n => (
                                 <div
                                     key={n.id}
-                                    style={{
-                                        padding: '1rem',
-                                        borderBottom: '1px solid #F1F5F9',
-                                        backgroundColor: n.is_read ? 'white' : '#EFF6FF',
-                                        display: 'flex',
-                                        gap: '0.75rem',
-                                        transition: 'background-color 0.2s'
-                                    }}
+                                    className={`p-4 border-b border-border/50 flex gap-3 transition-all hover:bg-white/40 ${n.is_read ? 'bg-transparent' : 'bg-primary/5'}`}
                                 >
-                                    <div style={{ flex: 1 }}>
-                                        <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '0.875rem', fontWeight: n.is_read ? '500' : '700', color: '#1E293B' }}>{n.title}</h4>
-                                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8125rem', color: '#475569', lineHeight: '1.4' }}>{n.message}</p>
-                                        <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{new Date(n.created_at).toLocaleString()}</span>
+                                    <div className="flex-1">
+                                        <h4 className={`text-sm mb-1 ${n.is_read ? 'font-semibold text-text-main' : 'font-extrabold text-primary'}`}>{n.title}</h4>
+                                        <p className="text-xs text-text-muted leading-relaxed mb-2">{n.message}</p>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-40">{new Date(n.created_at).toLocaleDateString()}</span>
                                     </div>
                                     {!n.is_read && (
                                         <button
                                             onClick={() => markAsRead(n.id)}
-                                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#10B981', alignSelf: 'center', padding: '0.25rem' }}
+                                            className="self-center p-1.5 rounded-full bg-emerald-light text-emerald hover:bg-emerald/20 transition-all border-none cursor-pointer"
                                             title="Marquer comme lu"
                                         >
-                                            <Check size={16} />
+                                            <Check size={14} strokeWidth={3} />
                                         </button>
                                     )}
                                 </div>

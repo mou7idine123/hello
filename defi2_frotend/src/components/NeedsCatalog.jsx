@@ -61,8 +61,9 @@ const NeedsCatalog = () => {
                         onChange={e => setFilterStatus(e.target.value)}
                     >
                         <option value="All">Tous les statuts</option>
-                        <option value="Open">Ouvert</option>
-                        <option value="Funded">Financé</option>
+                        <option value="ouvert">Ouvert</option>
+                        <option value="finance">Financé</option>
+                        <option value="complete">Terminé</option>
                     </select>
                 </div>
 
@@ -71,16 +72,16 @@ const NeedsCatalog = () => {
                     {filteredNeeds.map(need => {
                         const percent = Math.min((need.collected_mru / need.required_mru) * 100, 100);
                         return (
-                            <div className="need-card" key={need.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/needs/${need.id}`)}>
+                            <div className="need-card" key={need.id} onClick={() => navigate(`/needs/${need.id}`)}>
                                 <div className="card-header">
                                     <div className="card-type">{need.type}</div>
-                                    <span className={`badge ${need.status === 'Open' ? 'badge-open' : 'badge-funded'}`}>
-                                        {need.status}
+                                    <span className={`badge ${need.status === 'ouvert' ? 'badge-open' : 'badge-funded'}`}>
+                                        {need.status === 'ouvert' ? t('catalog.statusOpen') || 'OUVERT' : t('catalog.statusFunded') || 'FINANCÉ'}
                                     </span>
                                 </div>
 
                                 <div className="card-district">
-                                    <MapPin size={16} />
+                                    <MapPin size={16} strokeWidth={2.5} />
                                     {need.district}
                                 </div>
 
@@ -92,25 +93,30 @@ const NeedsCatalog = () => {
                                         />
                                     </div>
                                     <div className="progress-stats">
-                                        <span className="text-muted">{need.collected_mru.toLocaleString()} {t('dashboard.mru')} {t('catalog.collected').split(' ')[0]}</span>
-                                        <span style={{ color: "var(--secondary)", fontWeight: 700 }}>{need.required_mru.toLocaleString()} {t('dashboard.mru')}</span>
+                                        <span className="label">{t('catalog.collected')}</span>
+                                        <div className="flex flex-col items-end">
+                                            <span className="amount">{need.collected_mru.toLocaleString()} MRU</span>
+                                            <span className="label">sur {need.required_mru.toLocaleString()} MRU</span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div className="card-footer">
                                     <div className="flex items-center gap-2">
-                                        <ShieldCheck size={16} color="var(--primary)" />
-                                        Vérifié par :
+                                        <div className="w-6 h-6 rounded-full bg-emerald-light flex items-center justify-center text-emerald">
+                                            <ShieldCheck size={14} strokeWidth={3} />
+                                        </div>
+                                        <span className="text-xs uppercase tracking-wider opacity-60">Verified by</span>
                                     </div>
-                                    <div style={{ fontWeight: 600, color: "var(--secondary)" }}>{need.validator}</div>
+                                    <div className="text-text-main font-bold">{need.validator}</div>
                                 </div>
                             </div>
                         );
                     })}
 
                     {filteredNeeds.length === 0 && (
-                        <div className="text-center w-full" style={{ gridColumn: '1 / -1', padding: '3rem', color: 'var(--text-muted)' }}>
-                            Aucun besoin ne correspond à vos filtres.
+                        <div className="text-center w-full py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200" style={{ gridColumn: '1 / -1' }}>
+                            <p className="text-lg font-semibold text-text-muted">Aucun besoin ne correspond à vos filtres.</p>
                         </div>
                     )}
                 </div>

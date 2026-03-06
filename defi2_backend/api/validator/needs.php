@@ -1,10 +1,5 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+require_once __DIR__ . '/../../config/cors.php';if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
@@ -29,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         !empty($data->beneficiaries)
     ) {
         try {
-            $query = "INSERT INTO needs (type, district, description, full_description, required_mru, validator_name, beneficiaries, deadline_date) 
-                      VALUES (:type, :district, :description, :full_description, :required_mru, :validator_name, :beneficiaries, :deadline_date)";
+            $query = "INSERT INTO needs (type, district, description, full_description, required_mru, validator_name, beneficiaries, deadline_date, status) 
+                      VALUES (:type, :district, :description, :full_description, :required_mru, :validator_name, :beneficiaries, :deadline_date, 'ouvert')";
             
             $stmt = $db->prepare($query);
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, AlertCircle, MapPin } from 'lucide-react';
 
 const CreateNeed = () => {
     const navigate = useNavigate();
@@ -35,53 +35,82 @@ const CreateNeed = () => {
     };
 
     return (
-        <div className="container" style={{ padding: '2rem 1rem', maxWidth: '800px', margin: '0 auto', minHeight: '80vh' }}>
-            <h1 style={{ fontSize: '2rem', marginBottom: '2rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <PlusCircle color="#10B981" /> Publier un Nouveau Besoin
-            </h1>
+        <div className="admin-main" style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+            <div style={{ marginBottom: '3rem' }}>
+                <h1 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                    Publier un Nouveau Besoin
+                </h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '1.125rem' }}>Détaillez les nécessités de la famille pour lancer la collecte.</p>
+            </div>
 
-            <form onSubmit={handleSubmit} style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
-                {error && <div style={{ backgroundColor: '#FEE2E2', color: '#DC2626', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem' }}>{error}</div>}
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Titre (Type)</label>
-                        <input type="text" name="type" required value={formData.type} onChange={handleChange} placeholder="ex: Panier Alimentaire Ramadan" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1' }} />
+            <form onSubmit={handleSubmit} className="admin-card-soft" style={{ padding: '3rem' }}>
+                {error && (
+                    <div style={{
+                        backgroundColor: '#fef2f2', color: '#dc2626', padding: '1rem 1.5rem',
+                        borderRadius: 'var(--radius-lg)', marginBottom: '2.5rem', border: '1px solid #fee2e2',
+                        fontWeight: 600, fontSize: '0.9375rem', display: 'flex', alignItems: 'center', gap: '0.75rem'
+                    }}>
+                        <AlertCircle size={20} /> {error}
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Quartier</label>
-                        <input type="text" name="district" required value={formData.district} onChange={handleChange} placeholder="ex: Tarhil, Nouakchott" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1' }} />
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                    <div className="admin-form-group">
+                        <label className="admin-label">Titre du Besoin (Type)</label>
+                        <input type="text" name="type" required value={formData.type} onChange={handleChange}
+                            className="admin-input" placeholder="ex: Panier Alimentaire Ramadan" />
+                    </div>
+                    <div className="admin-form-group">
+                        <label className="admin-label">Quartier / Localisation</label>
+                        <div style={{ position: 'relative' }}>
+                            <input type="text" name="district" required value={formData.district} onChange={handleChange}
+                                className="admin-input" placeholder="ex: Tarhil, Nouakchott" />
+                            <MapPin size={18} color="var(--text-muted)" style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }} />
+                        </div>
                     </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Montant Requis (MRU)</label>
-                        <input type="number" name="required_mru" required value={formData.required_mru} onChange={handleChange} placeholder="5000" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                    <div className="admin-form-group">
+                        <label className="admin-label">Montant Requis (MRU)</label>
+                        <input type="number" name="required_mru" required value={formData.required_mru} onChange={handleChange}
+                            className="admin-input" placeholder="5000" />
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Bénéficiaires (Familles)</label>
-                        <input type="number" name="beneficiaries" required value={formData.beneficiaries} onChange={handleChange} placeholder="1" style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1' }} />
+                    <div className="admin-form-group">
+                        <label className="admin-label">Bénéficiaires (Familles)</label>
+                        <input type="number" name="beneficiaries" required value={formData.beneficiaries} onChange={handleChange}
+                            className="admin-input" placeholder="1" />
                     </div>
-                    <div>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Date Butoir (Optionnel)</label>
-                        <input type="date" name="deadline_date" value={formData.deadline_date} onChange={handleChange} style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1' }} />
+                    <div className="admin-form-group">
+                        <label className="admin-label">Date Butoir</label>
+                        <input type="date" name="deadline_date" value={formData.deadline_date} onChange={handleChange}
+                            className="admin-input" />
                     </div>
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Description Courte</label>
-                    <textarea name="description" required value={formData.description} onChange={handleChange} placeholder="Une phrase résumant l'urgence." style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1', resize: 'vertical' }} />
+                <div className="admin-form-group" style={{ marginBottom: '2rem' }}>
+                    <label className="admin-label">Description Courte (Accroche)</label>
+                    <textarea name="description" required value={formData.description} onChange={handleChange}
+                        className="admin-textarea" placeholder="Une phrase résumant l'urgence pour les donateurs."
+                        style={{ minHeight: '80px' }} />
                 </div>
 
-                <div style={{ marginBottom: '2rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>Description Complète</label>
-                    <textarea name="full_description" required value={formData.full_description} onChange={handleChange} rows="4" placeholder="Détaillez la situation de la famille et le contenu de l'aide prévue." style={{ width: '100%', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #CBD5E1', resize: 'vertical' }} />
+                <div className="admin-form-group" style={{ marginBottom: '3rem' }}>
+                    <label className="admin-label">Description Complète & Justification</label>
+                    <textarea name="full_description" required value={formData.full_description} onChange={handleChange}
+                        className="admin-textarea" rows="5" placeholder="Détaillez la situation sociale et le contenu précis de l'aide." />
                 </div>
 
-                <button type="submit" disabled={loading} style={{ width: '100%', padding: '1rem', backgroundColor: '#10B981', color: 'white', fontWeight: '600', fontSize: '1.125rem', border: 'none', borderRadius: '0.5rem', cursor: loading ? 'not-allowed' : 'pointer' }}>
-                    {loading ? 'Publication en cours...' : 'Publier le besoin'}
-                </button>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button type="button" onClick={() => navigate('/validator-dashboard')} className="btn"
+                        style={{ flex: 1, padding: '1rem', borderRadius: 'var(--radius-xl)', fontWeight: 700, background: '#f1f5f9', color: '#475569' }}>
+                        Annuler
+                    </button>
+                    <button type="submit" disabled={loading} className="btn btn-primary"
+                        style={{ flex: 2, padding: '1rem', borderRadius: 'var(--radius-xl)', fontWeight: 700, fontSize: '1.125rem' }}>
+                        {loading ? 'Publication en cours...' : 'Publier le besoin'}
+                    </button>
+                </div>
             </form>
         </div>
     );

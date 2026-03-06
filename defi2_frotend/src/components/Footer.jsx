@@ -6,11 +6,11 @@ const Footer = () => {
             <div className="container">
                 <div className="footer-grid">
                     <div>
-                        <div className="logo" style={{ color: "white", marginBottom: "1rem" }}>
-                            <Heart size={28} />
-                            IHSAN
+                        <div className="logo mb-6" style={{ color: "white" }}>
+                            <Heart size={24} strokeWidth={3} fill="var(--primary)" />
+                            <span>IHSAN</span>
                         </div>
-                        <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.875rem", lineHeight: "1.6" }}>
+                        <p className="max-w-xs text-sm leading-relaxed opacity-60">
                             Renforcer les communautés avec confiance, transparence et suivi d'impact en temps réel.
                             Restaurer la dignité grâce à une charité vérifiable, bloc par bloc.
                         </p>
@@ -21,30 +21,33 @@ const Footer = () => {
                         <ul className="footer-links">
                             <li><a href="#">À propos</a></li>
                             <li><a href="#needs">Catalogue des besoins</a></li>
-                            <li><a href="#">Tableau de bord de transparence publique</a></li>
-                            <li><a href="#">Notre réseau de validateurs</a></li>
+                            <li><a href="#">Transparence Publique</a></li>
+                            <li><a href="#">Réseau de Validateurs</a></li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="footer-title">Contact</h4>
-                        <ul className="footer-links" style={{ color: "rgba(255,255,255,0.8)" }}>
-                            <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <MapPinned size={16} /> Nouakchott, Mauritanie
+                        <ul className="footer-links opacity-80">
+                            <li className="gap-3">
+                                <MapPinned size={16} className="text-primary" />
+                                <span className="text-sm">Nouakchott, Mauritanie</span>
                             </li>
-                            <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <Mail size={16} /> info@ihsan-platform.com
+                            <li className="gap-3">
+                                <Mail size={16} className="text-primary" />
+                                <span className="text-sm">info@ihsan-platform.com</span>
                             </li>
-                            <li style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                                <Phone size={16} /> +222 42 55 53 27
+                            <li className="gap-3">
+                                <Phone size={16} className="text-primary" />
+                                <span className="text-sm">+222 42 55 53 27</span>
                             </li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="footer-title">Réseaux sociaux et partenaires</h4>
-                        <ul className="footer-links" style={{ color: "rgba(255,255,255,0.8)" }}>
-                            <li><a href="#">Twitter/X</a></li>
+                        <h4 className="footer-title">Réseaux Sociaux</h4>
+                        <ul className="footer-links opacity-80">
+                            <li><a href="#">Twitter / X</a></li>
                             <li><a href="#">LinkedIn</a></li>
                             <li><a href="#">Facebook</a></li>
                             <li><a href="#">Documentation API</a></li>
@@ -53,8 +56,12 @@ const Footer = () => {
                 </div>
 
                 <div className="copyright">
-                    &copy; {new Date().getFullYear()} Plateforme de charité transparente IHSAN. Tous droits réservés. <br />
-                    Conçu pour une transparence et une efficacité maximales.
+                    <p>&copy; {new Date().getFullYear()} IHSAN Transparent Charity Platform. Tous droits réservés.</p>
+                    <p className="mt-1 opacity-50 tracking-tighter flex items-center justify-center gap-2">
+                        <span>Developed by <strong className="text-white opacity-100">PixelCraft</strong></span>
+                        <span className="opacity-20">|</span>
+                        <span>Powered by Blockchain Transparency Engine</span>
+                    </p>
                 </div>
             </div>
         </footer>

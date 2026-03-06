@@ -21,22 +21,24 @@ const Hero = () => {
         <section className="hero">
             <div className="container">
                 {stats.announcements && stats.announcements.length > 0 && (
-                    <div style={{ marginBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className="flex flex-col gap-4 mb-12 max-w-2xl mx-auto">
                         {stats.announcements.map(a => (
-                            <div key={a.id} style={{ backgroundColor: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', padding: '1rem 1.5rem', borderRadius: '0.75rem', textAlign: 'left', backdropFilter: 'blur(10px)' }}>
-                                <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600, color: 'white', marginBottom: '0.25rem' }}>📢 {a.title}</h3>
-                                <p style={{ margin: 0, color: 'rgba(255,255,255,0.9)', whiteSpace: 'pre-wrap' }}>{a.content}</p>
+                            <div key={a.id} className="glass p-4 rounded-xl text-left shadow-sm border-primary/10">
+                                <h3 className="text-sm font-bold text-primary mb-1">📢 {a.title}</h3>
+                                <p className="text-sm text-text-muted leading-relaxed">{a.content}</p>
                             </div>
                         ))}
                     </div>
                 )}
 
                 <h1>{t('hero.title')}</h1>
-                <p className="quote">&quot;{t('hero.subtitle')}&quot;</p>
+                <p className="quote">{t('hero.subtitle')}</p>
 
                 <div className="stats-grid">
                     <div className="stat-card">
-                        <Heart size={48} className="w-full justify-center" color="var(--primary)" style={{ marginBottom: "1rem" }} />
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 text-primary">
+                            <Heart size={24} fill="currentColor" />
+                        </div>
                         <div className="stat-value">
                             {stats.families_helped.toLocaleString()}
                         </div>
@@ -44,7 +46,9 @@ const Hero = () => {
                     </div>
 
                     <div className="stat-card">
-                        <Coins size={48} className="w-full justify-center" color="#F59E0B" style={{ marginBottom: "1rem" }} />
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-6 text-amber-600">
+                            <Coins size={24} fill="currentColor" />
+                        </div>
                         <div className="stat-value">
                             {stats.mru_collected.toLocaleString()}
                         </div>
@@ -52,7 +56,9 @@ const Hero = () => {
                     </div>
 
                     <div className="stat-card">
-                        <CheckCircle size={48} className="w-full justify-center" color="#3B82F6" style={{ marginBottom: "1rem" }} />
+                        <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-6 text-blue-600">
+                            <CheckCircle size={24} fill="currentColor" />
+                        </div>
                         <div className="stat-value">
                             {stats.confirmed_donations.toLocaleString()}
                         </div>

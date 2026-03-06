@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { ShieldCheck, PlusCircle, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import {
+    ShieldCheck, PlusCircle, AlertCircle,
+    CheckCircle, Clock, ChefHat, MapPin,
+    X, Send, ArrowRight, Map, List
+} from 'lucide-react';
+import MapComponent from '../components/MapComponent';
 
 const ValidatorDashboard = () => {
     const { t } = useTranslation();
@@ -10,125 +15,415 @@ const ValidatorDashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Ordering logic states
+    const [partners, setPartners] = useState([]);
+    const [selectedNeed, setSelectedNeed] = useState(null);
+    const [selectedPartnerId, setSelectedPartnerId] = useState('');
+    const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+    const [orderedSuccess, setOrderedSuccess] = useState(false);
+    const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+
     useEffect(() => {
-        const fetchDashboard = async () => {
-            try {
-                const res = await api.get('/validator/dashboard.php');
-                setStats(res.data);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching validator dashboard", error);
-                setLoading(false);
-            }
-        };
         fetchDashboard();
+        fetchPartners();
     }, []);
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Chargement de votre espace...</div>;
+    const fetchDashboard = async () => {
+        try {
+            const res = await api.get('/validator/dashboard.php');
+            setStats(res.data);
+            setLoading(false);
+        } catch (error) {
+            console.error("Error fetching validator dashboard", error);
+            setLoading(false);
+        }
+    };
+
+    const fetchPartners = async () => {
+        try {
+            const res = await api.get('/validator/list_partners.php');
+            setPartners(res.data || []);
+        } catch (error) {
+            console.error("Error fetching partners", error);
+        }
+    };
+
+    const handlePlaceOrder = async (e) => {
+        e.preventDefault();
+        if (!selectedNeed || !selectedPartnerId) return;
+
+        setIsSubmittingOrder(true);
+        try {
+            await api.post('/validator/place_order.php', {
+                need_id: selectedNeed.id,
+                partner_id: selectedPartnerId,
+                scheduled_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ') // Default +2h
+            });
+            setOrderedSuccess(true);
+            setTimeout(() => {
+                setSelectedNeed(null);
+                setOrderedSuccess(false);
+                setSelectedPartnerId('');
+                fetchDashboard(); // Refresh
+            }, 2000);
+        } catch (error) {
+            console.error("Order placement failed", error);
+            alert("Erreur lors de la commande.");
+        } finally {
+            setIsSubmittingOrder(false);
+        }
+    };
+
+    if (loading || !stats) return (
+        <div style={{ display: 'flex', height: '80vh', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            <div className="spinner-border" style={{ marginRight: '1rem' }}></div>
+            Chargement de votre espace...
+        </div>
+    );
 
     return (
-        <div className="container" style={{ padding: '2rem 1rem', maxWidth: '1200px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h1 style={{ fontSize: '2rem', color: '#0F172A', display: 'flex', alignItems: 'center', gap: '0.75rem', margin: 0 }}>
-                    <ShieldCheck color="#10B981" size={32} /> Espace Validateur
-                </h1>
+        <div className="dashboard-full-width" style={{ padding: '3rem', minHeight: '100vh', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+            {/* Elegant Header Section */}
+            <div className="admin-card-glass" style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2.5rem 3rem', borderRadius: '30px' }}>
+                <div>
+                    <h1 style={{ fontSize: '3rem', fontWeight: 900, letterSpacing: '-0.05em', color: 'var(--text-main)', marginBottom: '0.5rem', background: 'linear-gradient(90deg, #0F172A, #2D61FF)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                        Espace Validateur
+                    </h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', fontWeight: 500 }}>Tableau de bord de gestion et suivi des collectes.</p>
+                </div>
                 <button
                     onClick={() => navigate('/validator/create-need')}
+                    className="btn btn-primary"
                     style={{
-                        padding: '0.75rem 1.5rem',
-                        backgroundColor: '#10B981',
-                        color: 'white',
-                        borderRadius: '0.5rem',
-                        border: 'none',
-                        cursor: 'pointer',
+                        padding: '1.25rem 2.5rem',
+                        borderRadius: '100px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem',
-                        fontWeight: '600',
-                        fontSize: '1rem',
-                        boxShadow: '0 4px 6px -1px rgba(16, 219, 129, 0.2)'
+                        gap: '0.75rem',
+                        fontSize: '1.125rem',
+                        fontWeight: 800,
+                        boxShadow: '0 12px 30px rgba(45, 97, 255, 0.3)',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}
                 >
-                    <PlusCircle size={20} />
+                    <PlusCircle size={24} />
                     Publier un Besoin
                 </button>
             </div>
 
-            {/* Quick Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', borderLeft: '4px solid #10B981' }}>
-                    <p style={{ color: '#64748B', fontWeight: '500', marginBottom: '0.5rem' }}>Score de Réputation</p>
-                    <h3 style={{ fontSize: '2rem', color: '#0F172A', fontWeight: '700', margin: 0 }}>{stats.reputation_score} / 100</h3>
+            {/* KPI Cards Grid */}
+            <div className="admin-kpi-grid-new" style={{ marginBottom: '4rem' }}>
+                <div className="admin-card-glass tab-green" style={{ borderTop: 'none', borderLeft: '6px solid var(--emerald)' }}>
+                    <div className="kpi-card-inner">
+                        <div className="kpi-content">
+                            <span className="kpi-label">Réputation</span>
+                            <div className="kpi-value-large">{stats.reputation_score} <span style={{ fontSize: '1.125rem', color: 'var(--text-muted)', fontWeight: 600 }}>/ 100</span></div>
+                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Score de fiabilité active</span>
+                        </div>
+                        <div className="progress-circle-wrap">
+                            <svg viewBox="0 0 36 36" className="progress-circle green">
+                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path className="circle" strokeDasharray={`${stats.reputation_score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <ShieldCheck size={18} className="center-icon" color="var(--emerald)" />
+                        </div>
+                    </div>
                 </div>
-                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', borderLeft: '4px solid #F59E0B' }}>
-                    <p style={{ color: '#64748B', fontWeight: '500', marginBottom: '0.5rem' }}>Besoins en cours</p>
-                    <h3 style={{ fontSize: '2rem', color: '#0F172A', fontWeight: '700', margin: 0 }}>{stats.active_needs}</h3>
+
+                <div className="admin-card-glass tab-blue" style={{ borderTop: 'none', borderLeft: '6px solid var(--primary)' }}>
+                    <div className="kpi-card-inner">
+                        <div className="kpi-content">
+                            <span className="kpi-label">Besoins actifs</span>
+                            <div className="kpi-value-large">{stats.active_needs}</div>
+                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Collectes en cours</span>
+                        </div>
+                        <div className="progress-circle-wrap">
+                            <svg viewBox="0 0 36 36" className="progress-circle blue">
+                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path className="circle" strokeDasharray="65, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <Clock size={18} className="center-icon" color="var(--primary)" />
+                        </div>
+                    </div>
                 </div>
-                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', borderLeft: '4px solid #EF4444' }}>
-                    <p style={{ color: '#64748B', fontWeight: '500', marginBottom: '0.5rem' }}>Dons à remettre (Urgent)</p>
-                    <h3 style={{ fontSize: '2rem', color: '#0F172A', fontWeight: '700', margin: 0 }}>{stats.donations_to_process}</h3>
+
+                <div className="admin-card-glass tab-amber" style={{ borderTop: 'none', borderLeft: '6px solid var(--warning)' }}>
+                    <div className="kpi-card-inner">
+                        <div className="kpi-content">
+                            <span className="kpi-label">À remettre</span>
+                            <div className="kpi-value-large" style={{ color: stats.donations_to_process > 0 ? 'var(--warning)' : 'inherit' }}>
+                                {stats.donations_to_process}
+                            </div>
+                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Dons financés urgents</span>
+                        </div>
+                        <div className="progress-circle-wrap">
+                            <svg viewBox="0 0 36 36" className={`progress-circle ${stats.donations_to_process > 0 ? 'amber' : 'blue'}`}>
+                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path className="circle" strokeDasharray={stats.donations_to_process > 0 ? "100, 100" : "0, 100"} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <AlertCircle size={18} className="center-icon" color={stats.donations_to_process > 0 ? 'var(--warning)' : 'var(--text-muted)'} />
+                        </div>
+                    </div>
                 </div>
-                <div style={{ backgroundColor: 'white', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', borderLeft: '4px solid #3B82F6' }}>
-                    <p style={{ color: '#64748B', fontWeight: '500', marginBottom: '0.5rem' }}>Familles Aidées</p>
-                    <h3 style={{ fontSize: '2rem', color: '#0F172A', fontWeight: '700', margin: 0 }}>{stats.total_families_helped}</h3>
+
+                <div className="admin-card-glass tab-blue" style={{ borderTop: 'none', borderLeft: '6px solid #8b5cf6' }}>
+                    <div className="kpi-card-inner">
+                        <div className="kpi-content">
+                            <span className="kpi-label">Impact Total</span>
+                            <div className="kpi-value-large">{stats.total_families_helped}</div>
+                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Familles assistées</span>
+                        </div>
+                        <div className="progress-circle-wrap">
+                            <svg viewBox="0 0 36 36" className="progress-circle blue">
+                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path className="circle" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <CheckCircle size={18} className="center-icon" color="var(--primary)" />
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Needs List */}
-            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', color: '#1E293B', fontWeight: '600' }}>Vos besoins publiés</h2>
-            <div style={{ backgroundColor: 'white', borderRadius: '1rem', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead style={{ backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-                        <tr>
-                            <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Besoin</th>
-                            <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Quartier</th>
-                            <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Fonds</th>
-                            <th style={{ padding: '1rem', color: '#475569', fontWeight: '600' }}>Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {stats.needs_list.map((n) => (
-                            <tr key={n.id} style={{ borderBottom: '1px solid #E2E8F0' }}>
-                                <td style={{ padding: '1rem' }}>
-                                    <div style={{ fontWeight: '500', color: '#1E293B' }}>{n.type}</div>
-                                    <div style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '4px' }}>{n.beneficiaries} bénéficiaires</div>
-                                </td>
-                                <td style={{ padding: '1rem', color: '#64748B' }}>{n.district}</td>
-                                <td style={{ padding: '1rem' }}>
-                                    <div style={{ fontWeight: '500', color: '#1E293B' }}>{Number(n.collected_mru).toLocaleString()} / {Number(n.required_mru).toLocaleString()} MRU</div>
-                                    <div style={{ width: '100%', backgroundColor: '#E2E8F0', height: '6px', borderRadius: '3px', marginTop: '8px', overflow: 'hidden' }}>
-                                        <div style={{
-                                            width: `${Math.min(100, (n.collected_mru / n.required_mru) * 100)}%`,
-                                            backgroundColor: '#10B981',
-                                            height: '100%'
-                                        }}></div>
+            {/* Needs Section */}
+            <div className="admin-card-glass" style={{ padding: '3rem', borderRadius: '30px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
+                    <h2 className="admin-section-title" style={{ marginBottom: 0, fontSize: '1.75rem', fontWeight: 900 }}>Vos besoins publiés</h2>
+                    <div className="view-toggle" style={{ display: 'flex', background: '#f1f5f9', padding: '0.25rem', borderRadius: '12px' }}>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            style={{
+                                padding: '0.5rem 1rem', borderRadius: '10px', border: 'none',
+                                background: viewMode === 'list' ? 'white' : 'transparent',
+                                color: viewMode === 'list' ? 'var(--primary)' : 'var(--text-muted)',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                fontWeight: 600, transition: 'all 0.2s',
+                                boxShadow: viewMode === 'list' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none'
+                            }}
+                        >
+                            <List size={18} /> Liste
+                        </button>
+                        <button
+                            onClick={() => setViewMode('map')}
+                            style={{
+                                padding: '0.5rem 1rem', borderRadius: '10px', border: 'none',
+                                background: viewMode === 'map' ? 'white' : 'transparent',
+                                color: viewMode === 'map' ? 'var(--primary)' : 'var(--text-muted)',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                fontWeight: 600, transition: 'all 0.2s',
+                                boxShadow: viewMode === 'map' ? '0 2px 8px rgba(0,0,0,0.05)' : 'none'
+                            }}
+                        >
+                            <Map size={18} /> Carte
+                        </button>
+                    </div>
+                </div>
+
+                {viewMode === 'map' ? (
+                    <MapComponent needs={stats.needs_list} />
+                ) : (
+                    <>
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Besoin</th>
+                                    <th>Quartier</th>
+                                    <th style={{ width: '300px' }}>Progression des fonds</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.needs_list.map((n) => (
+                                    <tr key={n.id}>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                <div style={{
+                                                    width: '40px', height: '40px', borderRadius: '12px',
+                                                    background: 'var(--primary-light)', color: 'var(--primary)',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    fontWeight: 700, fontSize: '1rem'
+                                                }}>
+                                                    {n.type.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{n.type}</div>
+                                                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>{n.beneficiaries} familles</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{n.district}</span>
+                                        </td>
+                                        <td>
+                                            <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem' }}>
+                                                <span style={{ fontWeight: 700 }}>{Number(n.collected_mru).toLocaleString()} MRU</span>
+                                                <span style={{ color: 'var(--text-muted)' }}>Cible: {Number(n.required_mru).toLocaleString()}</span>
+                                            </div>
+                                            <div style={{ width: '100%', backgroundColor: '#f1f5f9', height: '8px', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <div style={{
+                                                    width: `${Math.min(100, (n.collected_mru / n.required_mru) * 100)}%`,
+                                                    background: 'linear-gradient(90deg, var(--primary), #6366f1)',
+                                                    height: '100%',
+                                                    borderRadius: '4px',
+                                                    boxShadow: '0 0 10px rgba(45, 97, 255, 0.2)'
+                                                }}></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {n.status === 'ouvert' ? (
+                                                <span className="admin-badge badge-blue">
+                                                    <Clock size={14} style={{ marginRight: '4px' }} /> En collecte (Ouvert)
+                                                </span>
+                                            ) : (n.order_status === 'pret_pour_collecte') ? (
+                                                <span className="admin-badge badge-green" style={{ background: 'var(--emerald-light)', color: 'var(--emerald)' }}>
+                                                    <CheckCircle size={14} style={{ marginRight: '4px' }} /> Prête pour collecte
+                                                </span>
+                                            ) : (n.order_status === 'en_preparation' || n.order_status === 'en_attente') ? (
+                                                <span className="admin-badge badge-blue" style={{ background: '#fef3c7', color: '#92400e' }}>
+                                                    <Clock size={14} style={{ marginRight: '4px' }} /> En préparation
+                                                </span>
+                                            ) : n.status === 'finance' && !n.order_status ? (
+                                                <span className="admin-badge badge-green" style={{ background: 'var(--emerald-light)', color: 'var(--emerald)' }}>
+                                                    <CheckCircle size={14} style={{ marginRight: '4px' }} /> Financé (En attente partenaire)
+                                                </span>
+                                            ) : n.status === 'complete' ? (
+                                                <span className="admin-badge badge-green" style={{ background: 'var(--emerald-light)', color: 'var(--emerald)' }}>
+                                                    <CheckCircle size={14} style={{ marginRight: '4px' }} /> Terminé (Livré)
+                                                </span>
+                                            ) : (
+                                                <span className="admin-badge badge-blue" style={{ background: '#f8fafc', color: 'var(--text-muted)' }}>
+                                                    {n.order_status || n.status}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {(n.status === 'finance' || n.status === 'en_cours') && !n.order_status && (
+                                                <button
+                                                    onClick={() => setSelectedNeed(n)}
+                                                    className="btn btn-primary"
+                                                    style={{ padding: '0.5rem 1rem', borderRadius: 'var(--radius-lg)', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                >
+                                                    <ChefHat size={16} /> Commander
+                                                </button>
+                                            )}
+                                            {n.order_status === 'pret_pour_collecte' && (
+                                                <button
+                                                    onClick={() => navigate(`/confirm-delivery/${n.order_id}`, { state: { type: 'order' } })}
+                                                    className="btn btn-primary"
+                                                    style={{ background: 'var(--emerald)', whiteSpace: 'nowrap', padding: '0.5rem 1rem', borderRadius: 'var(--radius-lg)', fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                                >
+                                                    <ArrowRight size={16} /> Confirmer la remise
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </>
+                )}
+
+                {stats.needs_list.length === 0 && (
+                    <div style={{ padding: '4rem', textAlign: 'center' }}>
+                        <div style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Vous n'avez pas encore publié de besoin.</div>
+                    </div>
+                )}
+            </div>
+
+            {/* Order Selection Modal */}
+            {selectedNeed && (
+                <div className="admin-modal-overlay" onClick={() => setSelectedNeed(null)}>
+                    <div className="admin-card-soft" style={{ width: '100%', maxWidth: '500px', padding: '2.5rem', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setSelectedNeed(null)}
+                            style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <div style={{ marginBottom: '2rem' }}>
+                            <h3 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '0.5rem' }}>Commander le Besoin</h3>
+                            <p style={{ color: 'var(--text-muted)' }}>Sélectionnez un partenaire pour préparer les {selectedNeed.beneficiaries} {selectedNeed.type}.</p>
+                        </div>
+
+                        {orderedSuccess ? (
+                            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+                                <div style={{
+                                    width: '64px', height: '64px', borderRadius: '20px', background: 'var(--emerald-light)', color: 'var(--emerald)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem'
+                                }}>
+                                    <CheckCircle size={32} />
+                                </div>
+                                <h4 style={{ fontWeight: 800, color: 'var(--text-main)' }}>Commande Envoyée !</h4>
+                                <p style={{ color: 'var(--text-muted)' }}>Le partenaire a été notifié.</p>
+                            </div>
+                        ) : (
+                            <form onSubmit={handlePlaceOrder}>
+                                <div style={{ marginBottom: '2rem' }}>
+                                    <label className="admin-label">Choisir un Partenaire</label>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                        {partners.map(p => (
+                                            <label key={p.id} style={{
+                                                display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem',
+                                                border: '1px solid ' + (selectedPartnerId === p.id ? 'var(--primary)' : 'var(--border)'),
+                                                borderRadius: 'var(--radius-xl)', cursor: 'pointer',
+                                                background: selectedPartnerId === p.id ? 'var(--primary-light)' : 'white',
+                                                transition: 'all 0.2s'
+                                            }}>
+                                                <input
+                                                    type="radio"
+                                                    name="partner"
+                                                    value={p.id}
+                                                    checked={selectedPartnerId === p.id}
+                                                    onChange={() => setSelectedPartnerId(p.id)}
+                                                    style={{ display: 'none' }}
+                                                />
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        {p.business_name}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.25rem' }}>
+                                                        <MapPin size={12} /> {p.address}
+                                                    </div>
+                                                </div>
+                                                {selectedPartnerId === p.id && <CheckCircle size={20} color="var(--primary)" />}
+                                            </label>
+                                        ))}
+                                        {partners.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Aucun partenaire disponible pour le moment.</p>}
                                     </div>
-                                </td>
-                                <td style={{ padding: '1rem' }}>
-                                    {n.status === 'Open' && (
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: '500', backgroundColor: '#FEF08A', color: '#854D0E' }}>
-                                            <Clock size={14} /> En collecte
-                                        </span>
-                                    )}
-                                    {n.status === 'Funded' && (
-                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.875rem', fontWeight: '500', backgroundColor: '#D1FAE5', color: '#065F46' }}>
-                                            <CheckCircle size={14} /> Financé (Attente remise)
-                                        </span>
-                                    )}
-                                </td>
-                            </tr>
-                        ))}
-                        {stats.needs_list.length === 0 && (
-                            <tr>
-                                <td colSpan="4" style={{ padding: '2rem', textAlign: 'center', color: '#64748B' }}>
-                                    Vous n'avez pas encore publié de besoin. Cliquez sur "Publier un Besoin" pour commencer.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                                </div>
 
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={!selectedPartnerId || isSubmittingOrder}
+                                    style={{ width: '100%', padding: '1rem', borderRadius: 'var(--radius-xl)', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}
+                                >
+                                    {isSubmittingOrder ? <div className="spinner-border" style={{ width: '20px', height: '20px' }}></div> : <><Send size={18} /> Envoyer la commande</>}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            <style>
+                {`
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+                .spinner-border {
+                    display: inline-block;
+                    width: 2rem;
+                    height: 2rem;
+                    vertical-align: text-bottom;
+                    border: 0.25em solid currentColor;
+                    border-right-color: transparent;
+                    border-radius: 50%;
+                    animation: spin .75s linear infinite;
+                }
+                `}
+            </style>
         </div>
     );
 };

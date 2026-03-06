@@ -9,6 +9,16 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const checkUser = () => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -21,7 +31,6 @@ const Header = () => {
   useEffect(() => {
     checkUser();
     window.addEventListener('user-auth', checkUser);
-    // This allows synchronization across tabs if needed
     window.addEventListener('storage', checkUser);
     return () => {
       window.removeEventListener('user-auth', checkUser);
@@ -42,21 +51,21 @@ const Header = () => {
   };
 
   return (
-    <header className="header" style={{ position: 'fixed', top: 0, width: '100%', zIndex: 1000, backgroundColor: 'white', borderBottom: '1px solid #eee' }}>
-      <div className="container flex justify-between items-center" style={{ padding: '0.75rem 1rem' }}>
-        <Link to="/" className="logo flex items-center gap-2" style={{ fontWeight: 'bold', fontSize: '1.25rem', color: 'var(--primary)' }}>
-          <Heart size={28} />
+    <header className={`header-floating glass ${scrolled ? 'header-scrolled' : ''}`}>
+      <div className="container flex justify-between items-center px-4">
+        <Link to="/" className="logo">
+          <Heart size={20} strokeWidth={3} fill="var(--primary)" />
           <span>IHSAN</span>
         </Link>
+
         <nav className="flex items-center gap-4">
           <button
             onClick={toggleLanguage}
-            className="btn btn-outline flex items-center gap-2"
-            style={{ padding: '0.4rem 0.8rem', borderRadius: '99px', borderColor: 'var(--primary)', color: 'var(--primary)' }}
-            title="Traduire en Arabe / French"
+            className="nav-link flex items-center gap-2"
+            title="Traduire"
           >
-            <Globe size={18} />
-            <span className="hidden sm:inline">{t('header.toggleLang')}</span>
+            <Globe size={16} />
+            <span className="hidden md:inline">{i18n.language.toUpperCase()}</span>
           </button>
 
           {user && (
@@ -67,44 +76,44 @@ const Header = () => {
                     user.role === 'validator' ? '/validator-dashboard' :
                       '/donor-dashboard'
               }
-              className="btn btn-outline flex items-center gap-2"
-              style={{ border: 'none', padding: '0.5rem 1rem' }}
+              className="nav-link flex items-center gap-2"
             >
-              <LayoutDashboard size={18} />
-              <span className="hidden sm:inline">{t('header.dashboard')}</span>
+              <LayoutDashboard size={16} />
+              <span className="hidden lg:inline">{t('header.dashboard')}</span>
             </Link>
           )}
 
           {user && user.role === 'admin' && (
-            <div className="hidden lg:flex items-center gap-4 border-l pl-4 ml-2" style={{ borderColor: '#eee' }}>
-              <Link to="/admin/users" className="text-sm font-semibold hover:text-primary transition-colors">Utilisateurs</Link>
-              <Link to="/admin/needs" className="text-sm font-semibold hover:text-primary transition-colors">Besoins</Link>
-              <Link to="/admin/settings" className="text-sm font-semibold hover:text-primary transition-colors">Paramètres</Link>
+            <div className="hidden xl:flex items-center gap-4 border-l pl-4 border-border">
+              <Link to="/admin/users" className="nav-link">Utilisateurs</Link>
+              <Link to="/admin/needs" className="nav-link">Besoins</Link>
+              <Link to="/admin/settings" className="nav-link">Paramètres</Link>
             </div>
           )}
+
           {user ? (
             <div className="flex items-center gap-4">
               <NotificationBell />
-              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--text-main)' }}>
-                <User size={18} />
+              <div className="hidden sm:flex items-center gap-2 text-sm font-bold text-text-main bg-white/50 py-1 px-3 rounded-full border border-white/40">
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white">
+                  <User size={12} />
+                </div>
                 <span>{user.full_name || user.name || 'Donateur'}</span>
               </div>
-              <button onClick={handleLogout} className="btn btn-outline flex items-center gap-2" style={{ padding: '0.5rem 1rem', borderColor: '#ef4444', color: '#ef4444' }}>
-                <LogOut size={18} />
+              <button onClick={handleLogout} className="flex items-center gap-1.5 text-xs font-bold text-danger hover:bg-danger/5 px-3 py-1.5 rounded-lg transition-colors">
+                <LogOut size={14} />
                 <span className="hidden sm:inline">{t('header.logout')}</span>
               </button>
             </div>
           ) : (
-            <>
-              <Link to="/auth?mode=login" className="btn btn-outline flex items-center gap-2" style={{ padding: '0.5rem 1rem' }}>
-                <LogIn size={18} />
-                <span className="hidden sm:inline">{t('header.login')}</span>
+            <div className="flex items-center gap-3">
+              <Link to="/auth" className="nav-link font-bold pr-2">
+                Connexion
               </Link>
-              <Link to="/auth?mode=register" className="btn btn-primary flex items-center gap-2" style={{ padding: '0.5rem 1rem' }}>
-                <UserPlus size={18} />
-                <span className="hidden sm:inline">{t('header.register')}</span>
+              <Link to="/auth?mode=register" className="btn btn-primary btn-sm rounded-full">
+                S'inscrire
               </Link>
-            </>
+            </div>
           )}
         </nav>
       </div>
