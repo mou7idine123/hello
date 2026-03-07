@@ -1,6 +1,9 @@
 # IHSAN Platform - Système de Don Humanitaire Transparent
 
 IHSAN est une plateforme de don nouvelle génération qui utilise la **Blockchain Hedera Hashgraph** pour garantir une transparence totale et une traçabilité sans faille, du donateur jusqu'à la famille bénéficiaire.
+admin account for test :
+email=admin@ihsan.org
+password=admin
 
 ## 🌟 Vision du Projet
 
