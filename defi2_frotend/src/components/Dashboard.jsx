@@ -7,33 +7,44 @@ const Dashboard = () => {
     const [totalCollected, setTotalCollected] = useState(0);
 
     useEffect(() => {
-        // Fetch recent donations
-        axios.get('http://localhost:8000/api/recent_donations.php')
-            .then(res => {
-                if (Array.isArray(res.data)) {
-                    setRecentDonations(res.data);
-                } else {
+        const fetchData = () => {
+            // Fetch recent donations
+            axios.get('http://localhost:8000/api/recent_donations.php')
+                .then(res => {
+                    if (Array.isArray(res.data)) {
+                        setRecentDonations(res.data);
+                    } else {
+                        setRecentDonations([]);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching recent donations:", err);
                     setRecentDonations([]);
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching recent donations:", err);
-                setRecentDonations([]);
-            });
+                });
 
-        // Fetch global stats for total platform collected
-        axios.get('http://localhost:8000/api/stats.php')
-            .then(res => {
-                if (res.data && res.data.mru_collected !== undefined) {
-                    setTotalCollected(res.data.mru_collected);
-                } else {
+            // Fetch global stats for total platform collected
+            axios.get('http://localhost:8000/api/stats.php')
+                .then(res => {
+                    if (res.data && res.data.mru_collected !== undefined) {
+                        setTotalCollected(res.data.mru_collected);
+                    } else {
+                        setTotalCollected(0);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error fetching stats:", err);
                     setTotalCollected(0);
-                }
-            })
-            .catch(err => {
-                console.error("Error fetching stats:", err);
-                setTotalCollected(0);
-            });
+                });
+        };
+
+        // Initial fetch
+        fetchData();
+
+        // Set up polling interval every 7 seconds
+        const interval = setInterval(fetchData, 7000);
+
+        // Cleanup on unmount
+        return () => clearInterval(interval);
     }, []);
 
     return (
@@ -64,7 +75,9 @@ const Dashboard = () => {
                                 recentDonations.map(donation => (
                                     <div key={donation?.id || Math.random()} className="donation-item px-2">
                                         <div className="donation-info">
-                                            <span className="donation-id">{donation?.id || 'N/A'}</span>
+                                            <span className="donation-id" style={{ fontSize: '0.75rem' }}>
+                                                {donation?.hedera_sequence ? `#${donation.hedera_sequence}` : `ID: ${donation?.id || 'N/A'}`}
+                                            </span>
                                             <div className="donation-meta gap-2">
                                                 <CalendarDays size={12} />
                                                 <span>{donation?.date || '...'}</span>

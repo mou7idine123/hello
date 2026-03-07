@@ -27,12 +27,12 @@ try {
     $stats['total_mru'] = $res2['total'] ? (float)$res2['total'] : 0;
 
     // Total successful donations (count)
-    $stmt3 = $db->query("SELECT COUNT(*) as count FROM donations WHERE status IN ('Vérifié', 'Remis')");
+    $stmt3 = $db->query("SELECT COUNT(*) as count FROM donations WHERE status = 'verifie'");
     $res3 = $stmt3->fetch(PDO::FETCH_ASSOC);
     $stats['total_donations'] = $res3['count'] ? (int)$res3['count'] : 0;
 
     // Active needs count
-    $stmt4 = $db->query("SELECT COUNT(*) as count FROM needs WHERE status = 'Open'");
+    $stmt4 = $db->query("SELECT COUNT(*) as count FROM needs WHERE status = 'ouvert'");
     $res4 = $stmt4->fetch(PDO::FETCH_ASSOC);
     $stats['active_needs'] = $res4['count'] ? (int)$res4['count'] : 0;
 

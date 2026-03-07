@@ -10,10 +10,10 @@ $donations = []; // Zéro transaction par défaut
 
 if($db){
     try {
-        $query = "SELECT d.id, d.amount, n.district, d.created_at as date, d.status 
+        $query = "SELECT d.id, d.amount, n.district, d.created_at as date, d.status, d.hedera_sequence 
                   FROM donations d
                   JOIN needs n ON d.need_id = n.id
-                  WHERE d.status IN ('Vérifié', 'Remis', 'complete')
+                  WHERE d.status = 'verifie'
                   ORDER BY d.created_at DESC 
                   LIMIT 5";
         $stmt = $db->prepare($query);

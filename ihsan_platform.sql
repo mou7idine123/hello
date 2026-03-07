@@ -100,6 +100,7 @@ CREATE TABLE `donations` (
   `delivery_photo_path` varchar(255) DEFAULT NULL,
   `delivery_message` text,
   `hedera_sequence` varchar(100) DEFAULT NULL,
+  `hedera_tx_id` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -124,6 +125,8 @@ CREATE TABLE `needs` (
    `remise_proof_path` varchar(255) DEFAULT NULL,
    `remise_message` text,
    `remise_time` datetime DEFAULT NULL,
+  `hedera_sequence` varchar(255) DEFAULT NULL,
+  `hedera_tx_id` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -159,6 +162,7 @@ CREATE TABLE `partners` (
   `bank_account_number` varchar(100) DEFAULT NULL,
   `bank_name` varchar(100) DEFAULT NULL,
   `bank_account_holder` varchar(255) DEFAULT NULL,
+  `location` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -333,7 +337,10 @@ ALTER TABLE `partner_payments`
 -- AUTO_INCREMENT for table `platform_settings`
 --
 ALTER TABLE `platform_settings`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+INSERT INTO `platform_settings` (`id`, `setting_key`, `setting_value`) VALUES
+(1, 'commission_rate', '5.0');
 
 --
 -- AUTO_INCREMENT for table `users`
