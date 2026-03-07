@@ -195,6 +195,7 @@ CREATE TABLE `partner_orders` (
 CREATE TABLE `partner_payments` (
   `id` int NOT NULL,
   `partner_id` int NOT NULL,
+  `order_id` int DEFAULT NULL,
   `amount` decimal(10,2) NOT NULL,
   `transaction_ref` varchar(100) DEFAULT NULL,
   `status` enum('En attente','Payé') DEFAULT 'En attente',
@@ -268,7 +269,8 @@ ALTER TABLE `partner_orders`
 --
 ALTER TABLE `partner_payments`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `partner_id` (`partner_id`);
+  ADD KEY `partner_id` (`partner_id`),
+  ADD KEY `order_id` (`order_id`);
 
 --
 -- Indexes for table `platform_settings`

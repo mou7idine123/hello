@@ -10,7 +10,7 @@ $donations = []; // Zéro transaction par défaut
 
 if($db){
     try {
-        $query = "SELECT d.id, d.amount, n.district, d.created_at as date, d.status, d.hedera_sequence 
+        $query = "SELECT d.id, d.amount, n.district, d.created_at as date, d.status, d.hedera_sequence, d.hedera_tx_id 
                   FROM donations d
                   JOIN needs n ON d.need_id = n.id
                   WHERE d.status = 'verifie'

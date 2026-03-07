@@ -76,7 +76,9 @@ const Dashboard = () => {
                                     <div key={donation?.id || Math.random()} className="donation-item px-2">
                                         <div className="donation-info">
                                             <span className="donation-id" style={{ fontSize: '0.75rem' }}>
-                                                {donation?.hedera_sequence ? `#${donation.hedera_sequence}` : `ID: ${donation?.id || 'N/A'}`}
+                                                {donation?.hedera_sequence ? `#${donation.hedera_sequence}` :
+                                                    donation?.hedera_tx_id ? `#${donation.hedera_tx_id.replace('@', '-').replace(/\.(\d+)$/, '-$1')}` :
+                                                        `ID: ${donation?.id || 'N/A'}`}
                                             </span>
                                             <div className="donation-meta gap-2">
                                                 <CalendarDays size={12} />
