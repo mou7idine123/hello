@@ -91,6 +91,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $vMsg = "Votre preuve de remise pour le besoin \"" . $info['type'] . "\" a été validée par l'admin.";
             $db->prepare($nVal)->execute([':uid' => $info['validator_id'], ':msg' => $vMsg]);
 
+            // Log Delivery to Hedera HCS
+            $hederaPayload = [
+                "event" => "DELIVERY_CONFIRMED",
+                "need_id" => (int)$need_id,
+                "validator_id" => (int)$info['validator_id'],
+                "type" => $info['type'],
+                "timestamp" => date('c')
+            ];
+            $options = [
+                'http' => [
+                    'header'  => "Content-type: application/json\r\nConnection: close\r\n",
+                    'method'  => 'POST',
+                    'content' => json_encode($hederaPayload),
+                    'timeout' => 15 // Increased to 15s to wait for Hedera consensus
+                ]
+            ];
+            $context  = stream_context_create($options);
+            $hederaResult = @file_get_contents('http://localhost:3000/api/log-impact', false, $context);
+            
+            $hedera_tx_id = null;
+            $hedera_seq = null;
+            if ($hederaResult) {
+                $hData = json_decode($hederaResult, true);
+                if (isset($hData['success']) && $hData['success']) {
+                    $hedera_tx_id = $hData['transactionId']; 
+                    $hedera_seq = $hData['sequenceNumber'] ?? null;
+                }
+            }
+            if (!$hedera_tx_id) {
+                 $hedera_tx_id = 'pending-hedera-remise-' . time();
+            }
+
+            // Save the Hedera data to the needs table
+            $uNeedHCS = "UPDATE needs SET hedera_tx_id = :htx, hedera_sequence = :hseq WHERE id = :nid";
+            $db->prepare($uNeedHCS)->execute([':htx' => $hedera_tx_id, ':hseq' => $hedera_seq, ':nid' => $need_id]);
+
         } else {
             // Reject - Set back to 'en_cours'
             $uNeed = "UPDATE needs SET status = 'en_cours' WHERE id = :nid";

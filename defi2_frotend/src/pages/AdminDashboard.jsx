@@ -188,7 +188,6 @@ const AdminDashboard = () => {
                             <div className="kpi-value-large">{stats.total_donations}</div>
                             <div className="kpi-subtext">Total reçus ces 7 derniers jours: {stats.weekly_total_count || 0}</div>
                         </div>
-                        <ProgressCircle percent={100} color="var(--primary)" />
                     </div>
                 </div>
 
@@ -200,7 +199,6 @@ const AdminDashboard = () => {
                             <div className="kpi-value-large" style={{ color: 'var(--warning)' }}>{stats.pending_verifications}</div>
                             <div className="kpi-subtext">Reçus en attente de validation</div>
                         </div>
-                        <ProgressCircle percent={stats.total_donations > 0 ? Math.round((stats.pending_verifications / stats.total_donations) * 100) : 0} color="var(--warning)" />
                     </div>
                 </div>
 
@@ -212,7 +210,6 @@ const AdminDashboard = () => {
                             <div className="kpi-value-large" style={{ color: 'var(--emerald)' }}>{stats.confirmed_donations}</div>
                             <div className="kpi-subtext">Dons validés avec succès</div>
                         </div>
-                        <ProgressCircle percent={stats.total_donations > 0 ? Math.round((stats.confirmed_donations / stats.total_donations) * 100) : 0} color="var(--emerald)" />
                     </div>
                 </div>
             </div>

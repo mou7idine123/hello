@@ -157,13 +157,6 @@ const PartnerDashboard = () => {
                             <div className="kpi-value-large">{stats.toPrepare}</div>
                             <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Commandes urgentes</span>
                         </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className="progress-circle blue">
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray={`${Math.min(100, (stats.toPrepare / (orders.length || 1)) * 100)}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <ChefHat size={18} className="center-icon" color="var(--primary)" />
-                        </div>
                     </div>
                 </div>
 
@@ -174,13 +167,6 @@ const PartnerDashboard = () => {
                             <div className="kpi-value-large">{stats.ready}</div>
                             <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Attente de collecte</span>
                         </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className="progress-circle amber">
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray={`${Math.min(100, (stats.ready / (orders.length || 1)) * 100)}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <Package size={18} className="center-icon" color="var(--warning)" />
-                        </div>
                     </div>
                 </div>
 
@@ -190,13 +176,6 @@ const PartnerDashboard = () => {
                             <span className="kpi-label">Historique</span>
                             <div className="kpi-value-large">{stats.delivered}</div>
                             <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Total des aides</span>
-                        </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className="progress-circle green">
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <CheckCircle size={18} className="center-icon" color="var(--emerald)" />
                         </div>
                     </div>
                 </div>

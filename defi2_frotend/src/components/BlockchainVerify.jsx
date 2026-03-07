@@ -7,8 +7,11 @@ const BlockchainVerify = () => {
     const handleVerify = (e) => {
         e.preventDefault();
         if (!txId) return;
-        // Simulate testnet redirect
-        window.open(`https://testnet.explorer.ihsan.com/tx/${txId}`, '_blank');
+
+        // Format Hedera ID for HashScan (shard.realm.num@seconds.nanos -> shard.realm.num-seconds-nanos)
+        const formattedId = txId.replace('@', '-').replace(/\.(\d+)$/, '-$1');
+
+        window.open(`https://hashscan.io/testnet/transaction/${formattedId}`, '_blank');
     };
 
     return (
@@ -55,9 +58,9 @@ const BlockchainVerify = () => {
 
                     <div style={{ marginTop: '2.5rem', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                         <LinkIcon size={14} color="var(--primary)" />
-                        <a href="https://testnet.explorer.ihsan.com" target="_blank" rel="noreferrer"
+                        <a href="https://hashscan.io/testnet/dashboard" target="_blank" rel="noreferrer"
                             style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8125rem', fontWeight: 600, textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                            Parcourir l'explorateur Testnet
+                            Parcourir l'explorateur HashScan
                         </a>
                     </div>
                 </div>

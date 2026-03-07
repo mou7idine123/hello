@@ -47,27 +47,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $donation = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($donation) {
-            // Add some mock blockchain data if missing
-            if (!$donation['hedera_sequence']) {
-                $donation['hedera'] = [
-                    'sequenceNumber' => '0.0.' . rand(3000000, 4000000),
-                    'timestamp' => $donation['created_at'],
-                    'transactionId' => '0.0.' . rand(3000000, 4000000) . '@' . time() . '.000000000',
-                    'hashscanUrl' => 'https://hashscan.io/mainnet/',
-                    'topicId' => '0.0.' . rand(2000000, 3000000),
-                ];
+            // Priority: Real data from DB, otherwise mock for UX
+            $htx = $donation['hedera_tx_id'] ?? null;
+            $hseq = $donation['hedera_sequence'] ?? null;
+            
+            $donation['hedera'] = [
+                'sequenceNumber' => $hseq ?: '0.0.' . rand(3000000, 4000000),
+                'timestamp' => $donation['created_at'],
+                'transactionId' => $htx ?: ('0.0.' . rand(3000000, 4000000) . '@' . time() . '.000000000'),
+                'topicId' => '0.0.8113854',
+                'network' => 'Hedera Testnet'
+            ];
+
+            // Construct HashScan URL: Topic message link is best, otherwise Transaction link
+            if ($hseq) {
+                $donation['hedera']['hashscanUrl'] = "https://hashscan.io/testnet/topic/0.0.8113854?message=$hseq";
+            } elseif ($htx) {
+                // Format txId for HashScan (shard.realm.num@seconds.nanos -> shard.realm.num-seconds-nanos)
+                $formattedTxId = str_replace(['@', '.'], ['-', '-'], $htx);
+                // But wait, the transaction ID usually has shard.realm.num@seconds.nanos
+                // We actually want just hyphens. 
+                // Let's use a more robust regex or str_replace chain.
+                $parts = explode('@', $htx);
+                if (count($parts) === 2) {
+                    $formattedTxId = $parts[0] . '-' . str_replace('.', '-', $parts[1]);
+                } else {
+                    $formattedTxId = $htx;
+                }
+                $donation['hedera']['hashscanUrl'] = "https://hashscan.io/testnet/transaction/$formattedTxId";
             } else {
-                $donation['hedera'] = [
-                    'sequenceNumber' => $donation['hedera_sequence'],
-                    'timestamp' => $donation['created_at'],
-                    'transactionId' => $donation['hedera_sequence'], // Simplified
-                    'hashscanUrl' => 'https://hashscan.io/mainnet/search?q=' . $donation['hedera_sequence'],
-                    'topicId' => '0.0.2941872',
-                ];
+                $donation['hedera']['hashscanUrl'] = "https://hashscan.io/testnet/topic/0.0.8113854";
             }
             
             echo json_encode($donation);
-        } else {
+        }
+ else {
             http_response_code(404);
             echo json_encode(["message" => "Donation not found"]);
         }

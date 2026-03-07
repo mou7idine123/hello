@@ -21,8 +21,8 @@ try {
     $res1 = $stmt1->fetch(PDO::FETCH_ASSOC);
     $stats['total_families'] = $res1['total'] ? (int)$res1['total'] : 0;
 
-    // Total MRU collected (sum from verified/remitted donations)
-    $stmt2 = $db->query("SELECT SUM(amount) as total FROM donations WHERE status IN ('Vérifié', 'Remis')");
+    // Total MRU collected (sum of collected amounts for all needs)
+    $stmt2 = $db->query("SELECT SUM(collected_mru) as total FROM needs");
     $res2 = $stmt2->fetch(PDO::FETCH_ASSOC);
     $stats['total_mru'] = $res2['total'] ? (float)$res2['total'] : 0;
 

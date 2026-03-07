@@ -100,7 +100,7 @@ const Dashboard = () => {
                             </p>
 
                             <div className="p-4 bg-white rounded-2xl shadow-xl">
-                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=IHSAN_TRANSPARENCY" alt="QR Verify" className="w-20 h-20 opacity-90" />
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://hashscan.io/testnet/topic/0.0.8113854" alt="QR Verify" className="w-20 h-20 opacity-90" />
                             </div>
                             <span className="text-[10px] text-white/30 uppercase mt-4 tracking-tighter">Blockchain Verified ID</span>
                         </div>

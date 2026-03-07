@@ -66,13 +66,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $commission_amount = $raw_amount * ($commission_rate / 100);
             $net_amount = $raw_amount - $commission_amount;
 
-            // Trigger Hedera anchoring (Mock)
-            $hedera_seq = '0.0.' . rand(100000, 999999) . '-seq-' . time();
+            // Trigger Hedera anchoring via Microservice
+            $hederaPayload = [
+                "event" => "DONATION_VERIFIED",
+                "donation_id" => (int)$id,
+                "amount" => (float)$raw_amount,
+                "need_id" => (int)$donation['need_id'],
+                "timestamp" => date('c')
+            ];
+            $options = [
+                'http' => [
+                    'header'  => "Content-type: application/json\r\nConnection: close\r\n",
+                    'method'  => 'POST',
+                    'content' => json_encode($hederaPayload),
+                    'timeout' => 15 // Increased to 15s to wait for Hedera consensus
+                 ]
+            ];
+            $context  = stream_context_create($options);
+            $hederaResult = @file_get_contents('http://localhost:3000/api/log-impact', false, $context);
+            $hedera_tx_id = null;
+            $hedera_seq = null;
+            if ($hederaResult) {
+                $hData = json_decode($hederaResult, true);
+                if (isset($hData['success']) && $hData['success']) {
+                    $hedera_tx_id = $hData['transactionId']; // Hedera TX ID
+                    $hedera_seq = $hData['sequenceNumber'] ?? null;
+                }
+            }
+            if (!$hedera_tx_id) {
+                 $hedera_tx_id = 'pending-hedera-' . time();
+            }
 
             // Update donation status
-            $query = "UPDATE donations SET status = 'verifie', admin_note = :note, hedera_sequence = :hseq WHERE id = :id";
+            $query = "UPDATE donations SET status = 'verifie', admin_note = :note, hedera_tx_id = :htx, hedera_sequence = :hseq WHERE id = :id";
             $stmt = $db->prepare($query);
-            $stmt->execute([':note' => $admin_note, ':hseq' => $hedera_seq, ':id' => $id]);
+            $stmt->execute([':note' => $admin_note, ':htx' => $hedera_tx_id, ':hseq' => $hedera_seq, ':id' => $id]);
 
             // Update need collected amount with the Net amount (after commission drop)
             $updateNeed = "UPDATE needs SET collected_mru = collected_mru + :net WHERE id = :need_id";

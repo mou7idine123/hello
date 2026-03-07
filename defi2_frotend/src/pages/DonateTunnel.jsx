@@ -243,7 +243,7 @@ const DonateTunnel = () => {
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem' }}>Montant du don</label>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                                {[100, 300, 500, 1000].map(s => (
+                                {[100, 300, 500, 1000].filter(s => s <= (parseFloat(need.required_mru) - parseFloat(need.collected_mru))).map(s => (
                                     <button key={s} onClick={() => setAmount(s.toString())}
                                         className={`btn ${amount === s.toString() ? 'btn-primary' : 'btn-outline'}`}
                                         style={{ fontSize: '0.95rem', padding: '0.65rem' }}>
@@ -252,10 +252,13 @@ const DonateTunnel = () => {
                                 ))}
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <input type="number" min="100" className="filter-select" style={{ flex: 1 }}
+                                <input type="number" min="100" max={parseFloat(need.required_mru) - parseFloat(need.collected_mru)} className="filter-select" style={{ flex: 1, borderColor: Number(amount) > (parseFloat(need.required_mru) - parseFloat(need.collected_mru)) ? 'var(--danger)' : 'var(--border)' }}
                                     placeholder="Autre montant…" value={amount} onChange={e => setAmount(e.target.value)} />
                                 <span style={{ fontWeight: 700, color: 'var(--secondary)' }}>MRU</span>
                             </div>
+                            {Number(amount) > (parseFloat(need.required_mru) - parseFloat(need.collected_mru)) && (
+                                <div style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.5rem', fontWeight: 600 }}>Le montant ne peut pas dépasser le reste à collecter.</div>
+                            )}
                         </div>
 
                         {/* Anonymous */}
@@ -289,7 +292,7 @@ const DonateTunnel = () => {
                             </select>
                         </div>
 
-                        <button className="btn btn-primary w-full" disabled={!amount || Number(amount) < 100 || !selectedBankId}
+                        <button className="btn btn-primary w-full" disabled={!amount || Number(amount) < 100 || Number(amount) > (parseFloat(need.required_mru) - parseFloat(need.collected_mru)) || !selectedBankId}
                             onClick={() => setStep(2)}
                             style={{ padding: '0.9rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                             Continuer <ArrowRight size={18} />

@@ -5,6 +5,7 @@ import NeedsCatalog from './components/NeedsCatalog';
 import Dashboard from './components/Dashboard';
 import BlockchainVerify from './components/BlockchainVerify';
 import ImpactShowcase from './components/ImpactShowcase';
+import PublicNetwork from './components/PublicNetwork';
 import Footer from './components/Footer';
 import Auth from './pages/Auth';
 import DonorDashboard from './pages/DonorDashboard';
@@ -30,6 +31,7 @@ function Home() {
       <Hero />
       <NeedsCatalog />
       <ImpactShowcase />
+      <PublicNetwork />
       <Dashboard />
       <BlockchainVerify />
     </>

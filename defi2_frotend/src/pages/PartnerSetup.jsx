@@ -23,6 +23,7 @@ const PartnerSetup = () => {
     const [user, setUser] = useState(null);
     const [formData, setFormData] = useState({
         business_name: '',
+        location: '',
         address: '',
         specialties: '',
         opening_hours: '',
@@ -132,6 +133,22 @@ const PartnerSetup = () => {
                                         placeholder="Ex: Cuisine Centrale IHSAN"
                                     />
                                     <Building2 size={18} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
+                                </div>
+                            </div>
+
+                            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                <label className="admin-label">Ville / Quartier</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        className="admin-input"
+                                        value={formData.location}
+                                        onChange={handleChange}
+                                        required
+                                        placeholder="Ex: Tevragh Zeina, Nouakchott"
+                                    />
+                                    <MapPin size={18} style={{ position: 'absolute', right: '1.25rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.3 }} />
                                 </div>
                             </div>
 

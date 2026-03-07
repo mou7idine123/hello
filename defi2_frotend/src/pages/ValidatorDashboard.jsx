@@ -135,13 +135,6 @@ const ValidatorDashboard = () => {
                             <div className="kpi-value-large">{stats.validator_score} <span style={{ fontSize: '1.125rem', color: 'var(--text-muted)', fontWeight: 600 }}>pts</span></div>
                             <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Indice de performance terrain</span>
                         </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className="progress-circle green">
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray={`${Math.min(100, (stats.validator_score / 50) * 100)}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <ShieldCheck size={18} className="center-icon" color="var(--emerald)" />
-                        </div>
                     </div>
                 </div>
 
@@ -152,34 +145,9 @@ const ValidatorDashboard = () => {
                             <div className="kpi-value-large">{stats.active_needs}</div>
                             <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Collectes en cours</span>
                         </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className="progress-circle blue">
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray="65, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <Clock size={18} className="center-icon" color="var(--primary)" />
-                        </div>
                     </div>
                 </div>
 
-                <div className="admin-card-glass tab-amber" style={{ borderTop: 'none', borderLeft: '6px solid var(--warning)' }}>
-                    <div className="kpi-card-inner">
-                        <div className="kpi-content">
-                            <span className="kpi-label">À remettre</span>
-                            <div className="kpi-value-large" style={{ color: stats.donations_to_process > 0 ? 'var(--warning)' : 'inherit' }}>
-                                {stats.donations_to_process}
-                            </div>
-                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Dons financés urgents</span>
-                        </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className={`progress-circle ${stats.donations_to_process > 0 ? 'amber' : 'blue'}`}>
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray={stats.donations_to_process > 0 ? "100, 100" : "0, 100"} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <AlertCircle size={18} className="center-icon" color={stats.donations_to_process > 0 ? 'var(--warning)' : 'var(--text-muted)'} />
-                        </div>
-                    </div>
-                </div>
 
                 <div className="admin-card-glass tab-blue" style={{ borderTop: 'none', borderLeft: '6px solid #8b5cf6' }}>
                     <div className="kpi-card-inner">
@@ -187,13 +155,6 @@ const ValidatorDashboard = () => {
                             <span className="kpi-label">Impact Total</span>
                             <div className="kpi-value-large">{stats.total_families_helped}</div>
                             <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Familles assistées</span>
-                        </div>
-                        <div className="progress-circle-wrap">
-                            <svg viewBox="0 0 36 36" className="progress-circle blue">
-                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <CheckCircle size={18} className="center-icon" color="var(--primary)" />
                         </div>
                     </div>
                 </div>

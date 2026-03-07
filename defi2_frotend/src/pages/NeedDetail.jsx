@@ -39,7 +39,7 @@ const NeedDetail = () => {
     );
 
     const percent = Math.min(Math.round((need.collected_mru / need.required_mru) * 100), 100);
-    const isOpen = need.status === 'Open';
+    const isOpen = need.status === 'ouvert' || need.status === 'Open';
 
     const validator = {
         name: need.validator || 'Validateur IHSAN',
@@ -167,7 +167,7 @@ const NeedDetail = () => {
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', justifyContent: 'center' }}>
                                             <Star size={18} color="#f59e0b" fill="#f59e0b" />
                                             <span style={{ fontSize: '1.5rem', fontWeight: 800, color: '#f59e0b' }}>{validator.score}</span>
-                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>/100</span>
+                                            <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>pts</span>
                                         </div>
                                         <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Score de réputation</div>
                                     </div>

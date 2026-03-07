@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmtCheck->execute();
     
     $business_name = $data->business_name ?? '';
+    $location = $data->location ?? '';
     $address = $data->address ?? '';
     $specialties = $data->specialties ?? '';
     $opening_hours = $data->opening_hours ?? '';
@@ -57,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Update
         $query = "UPDATE partners SET 
                   business_name = :bn, 
+                  location = :loc,
                   address = :addr, 
                   specialties = :spec, 
                   opening_hours = :oh, 
@@ -66,13 +68,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                   WHERE user_id = :user_id";
     } else {
         // Create
-        $query = "INSERT INTO partners (user_id, business_name, address, specialties, opening_hours, bank_account_number, bank_name, bank_account_holder)
-                  VALUES (:user_id, :bn, :addr, :spec, :oh, :ban, :bname, :bah)";
+        $query = "INSERT INTO partners (user_id, business_name, location, address, specialties, opening_hours, bank_account_number, bank_name, bank_account_holder)
+                  VALUES (:user_id, :bn, :loc, :addr, :spec, :oh, :ban, :bname, :bah)";
     }
     
     $stmt = $db->prepare($query);
     $stmt->bindParam(':user_id', $user_id);
     $stmt->bindParam(':bn', $business_name);
+    $stmt->bindParam(':loc', $location);
     $stmt->bindParam(':addr', $address);
     $stmt->bindParam(':spec', $specialties);
     $stmt->bindParam(':oh', $opening_hours);

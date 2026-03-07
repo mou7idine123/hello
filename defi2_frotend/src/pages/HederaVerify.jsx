@@ -21,7 +21,7 @@ const HederaVerify = () => {
                     status: 'verified',
                     sequence: searchSeq,
                     timestamp: new Date().toISOString(),
-                    network: 'Hedera Mainnet',
+                    network: 'Hedera Testnet',
                     message: "Ancrage cryptographique validé. Ce don correspond bien à une livraison sur le terrain certifiée par l'application IHSAN."
                 });
             } else {
@@ -98,7 +98,7 @@ const HederaVerify = () => {
                                 </div>
 
                                 <a
-                                    href={`https://hashscan.io/mainnet/topic/0.0.1234567?message=${result.sequence}`}
+                                    href={`https://hashscan.io/testnet/topic/0.0.8113854?message=${result.sequence}`}
                                     target="_blank"
                                     rel="noreferrer"
                                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', width: '100%', padding: '1rem', backgroundColor: '#10B981', color: 'white', fontWeight: '600', textDecoration: 'none', borderRadius: '0.5rem', marginTop: '1.5rem', transition: 'box-shadow 0.2s' }}

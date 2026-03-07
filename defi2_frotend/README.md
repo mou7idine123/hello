@@ -44,6 +44,8 @@ L'application est divisée en **6 espaces** selon le rôle de l'utilisateur :
 - `Dashboard.jsx` — Transparence financière et dons récents
 - `ProtectedRoute.jsx` — Garde de route par rôle JWT
 - `NotificationBell.jsx` — Notifications en temps réel
+- `PublicNetwork.jsx` — Section publique des validateurs et partenaires (Landing Page)
+- `BlockchainVerify.jsx` — Formulaire de vérification HashScan avec auto-formatage
 
 ## Installation
 
@@ -62,12 +64,11 @@ npm run build
 
 ## Fonctionnalités Récentes
 
-- ✅ **Vitrine d'Impact Publique** — Section sur la page d'accueil montrant les remises effectuées avec photos et messages de terrain
-- ✅ **Page Impact Proof Partageable** — Chaque don a une page publique détaillée (`/impact/:id`) accessible sans connexion
-- ✅ **Score Validateur** — Système de réputation dynamique affiché sur les fiches besoins et le dashboard validateur  
-- ✅ **Familles Aidées** — Compteur précis basé sur les besoins réellement complétés (global + personnel par donneur)
-- ✅ **Message du Terrain** — Les validateurs laissent un message aux donneurs lors de la remise, visible sur la page impact
-- ✅ **Historique Partenaire** — Les partenaires voient leurs paiements et commandes avec détails
+- ✅ **Réseau de Confiance** — Nouvelle section sur la page d'accueil avec les profils des validateurs et partenaires locaux (boutiques/cuisines).
+- ✅ **Intégration HashScan** — Liens directs vers l'explorateur Hedera Testnet avec formatage automatique des Transaction IDs.
+- ✅ **Localisation Partenaire** — Affichage des quartiers et liens Google Maps pour chaque partenaire logistique.
+- ✅ **Validation des Dons** — Limitation dynamique du montant des dons pour ne pas dépasser le besoin restant.
+- ✅ **Vitrine d'Impact Publique** — Section montrant les dernières remises effectuées avec photos et messages de terrain.
 
 ## Scripts Disponibles
 

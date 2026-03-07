@@ -53,7 +53,8 @@ const DonorDashboard = () => {
         fetchData();
     }, []);
 
-    const confirmedDonations = currentDonations.filter(d => d.status === 'verifie' || d.status === 'Remis' || d.status === 'complete');
+    // Only show in the Impact gallery if the NEED itself is fully delivered (complete)
+    const confirmedDonations = currentDonations.filter(d => d.need_status === 'complete');
 
     const getStatusBadge = (status) => {
         const transStatus = t(`dashboard.status.${status}`) || status;
