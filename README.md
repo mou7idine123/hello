@@ -63,6 +63,10 @@ Le projet est structuré en trois composants principaux :
 
 ## 🛡️ Transparence & Audit
 Chaque don génère un lien de vérification public pointant vers **HashScan**, permettant à n'importe qui de vérifier l'existence de la transaction et le message de remise sans compromettre l'anonymat des bénéficiaires.
+ ```bash
+  php create_test_users.php
+  ```
+## create test users :
 
 
 production like if available : https://ihsan-platform.free.nf
