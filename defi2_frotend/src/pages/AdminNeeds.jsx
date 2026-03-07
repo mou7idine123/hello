@@ -43,7 +43,8 @@ const AdminNeeds = () => {
                 district: editingNeed.district,
                 description: editingNeed.description,
                 required_mru: editingNeed.required_mru,
-                beneficiaries: editingNeed.beneficiaries
+                beneficiaries: editingNeed.beneficiaries,
+                status: editingNeed.status
             });
             setEditingNeed(null);
             fetchNeeds();
@@ -52,11 +53,11 @@ const AdminNeeds = () => {
 
     const getStatusBadge = (status) => {
         const map = {
-            'Open': { cls: 'admin-badge-amber', label: 'Ouvert' },
-            'Funded': { cls: 'admin-badge-green', label: 'Financé' },
-            'In progress': { cls: 'admin-badge-blue', label: 'En cours' },
-            'Confirmed': { cls: 'admin-badge-solid-green', label: 'Confirmé' },
-            'Cancelled': { cls: 'admin-badge-red', label: 'Annulé' },
+            'ouvert': { cls: 'admin-badge-amber', label: 'Ouvert' },
+            'finance': { cls: 'admin-badge-green', label: 'Financé' },
+            'en_cours': { cls: 'admin-badge-blue', label: 'En cours' },
+            'complete': { cls: 'admin-badge-solid-green', label: 'Complété' },
+            'annule': { cls: 'admin-badge-red', label: 'Annulé' },
         };
         const s = map[status] || { cls: 'admin-badge-gray', label: status };
         return <span className={`admin-badge ${s.cls}`}>{s.label}</span>;
@@ -71,11 +72,11 @@ const AdminNeeds = () => {
 
     const statCounts = {
         all: needs.length,
-        Open: needs.filter(n => n.status === 'Open').length,
-        Funded: needs.filter(n => n.status === 'Funded').length,
-        'In progress': needs.filter(n => n.status === 'In progress').length,
-        Confirmed: needs.filter(n => n.status === 'Confirmed').length,
-        Cancelled: needs.filter(n => n.status === 'Cancelled').length,
+        'ouvert': needs.filter(n => n.status === 'ouvert').length,
+        'finance': needs.filter(n => n.status === 'finance').length,
+        'en_cours': needs.filter(n => n.status === 'en_cours').length,
+        'complete': needs.filter(n => n.status === 'complete').length,
+        'annule': needs.filter(n => n.status === 'annule').length,
     };
 
     if (loading) return (
@@ -109,11 +110,11 @@ const AdminNeeds = () => {
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                 {[
                     { key: 'all', label: 'Tous' },
-                    { key: 'Open', label: 'Ouverts' },
-                    { key: 'Funded', label: 'Financés' },
-                    { key: 'In progress', label: 'En cours' },
-                    { key: 'Confirmed', label: 'Confirmés' },
-                    { key: 'Cancelled', label: 'Annulés' },
+                    { key: 'ouvert', label: 'Ouverts' },
+                    { key: 'finance', label: 'Financés' },
+                    { key: 'en_cours', label: 'En cours' },
+                    { key: 'complete', label: 'Complétés' },
+                    { key: 'annule', label: 'Annulés' },
                 ].map(tab => (
                     <button
                         key={tab.key}
@@ -156,7 +157,7 @@ const AdminNeeds = () => {
                             {filtered.map(n => {
                                 const pct = n.required_mru > 0 ? Math.min(100, (n.collected_mru / n.required_mru) * 100) : 0;
                                 return (
-                                    <tr key={n.id} style={{ opacity: n.status === 'Cancelled' ? 0.5 : 1 }}>
+                                    <tr key={n.id} style={{ opacity: n.status === 'annule' ? 0.5 : 1 }}>
                                         <td>
                                             <div className="cell-bold">{n.type}</div>
                                             <div className="cell-muted">{n.district}</div>
@@ -222,6 +223,16 @@ const AdminNeeds = () => {
                                     <div className="admin-field">
                                         <label className="admin-label">Bénéficiaires</label>
                                         <input type="number" className="admin-input" value={editingNeed.beneficiaries || ''} onChange={e => setEditingNeed({ ...editingNeed, beneficiaries: e.target.value })} />
+                                    </div>
+                                    <div className="admin-field">
+                                        <label className="admin-label">Statut</label>
+                                        <select className="admin-input" value={editingNeed.status || 'ouvert'} onChange={e => setEditingNeed({ ...editingNeed, status: e.target.value })}>
+                                            <option value="ouvert">Ouvert</option>
+                                            <option value="finance">Financé</option>
+                                            <option value="en_cours">En cours</option>
+                                            <option value="complete">Complété</option>
+                                            <option value="annule">Annulé</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>

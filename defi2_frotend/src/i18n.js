@@ -27,10 +27,10 @@ const resources = {
                 seeImpactProof: "Voir la preuve d'impact",
                 anonymized: "Anonymisé",
                 status: {
-                    "En attente de virement": "En attente de virement",
-                    "Reçu soumis": "Reçu soumis",
-                    "Vérifié": "Vérifié",
-                    "Remis": "Remis",
+                    en_attente: "En attente",
+                    verifie: "Vérifié",
+                    refuse: "Refusé",
+                    Remis: "Remis",
                 }
             },
             auth: {
@@ -104,10 +104,10 @@ const resources = {
                 seeImpactProof: "رؤية دليل الأثر",
                 anonymized: "مجهول الهوية",
                 status: {
-                    "En attente de virement": "في انتظار التحويل",
-                    "Reçu soumis": "تم إرسال الوصل",
-                    "Vérifié": "تم التحقق",
-                    "Remis": "تم التسليم",
+                    en_attente: "في انتظار التحقق",
+                    verifie: "تم التحقق",
+                    refuse: "تم الرفض",
+                    Remis: "تم التسليم",
                 }
             },
             auth: {

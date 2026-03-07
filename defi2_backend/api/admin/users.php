@@ -15,7 +15,7 @@ $db = $database->getConnection();
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Fetch all users except other admins maybe? Or just all.
     try {
-        $query = "SELECT id, full_name, email, phone, role, is_active, reputation_score, created_at 
+        $query = "SELECT id, full_name, email, phone, role, is_active, reputation_score, score, created_at 
                   FROM users 
                   ORDER BY created_at DESC";
         $stmt = $db->query($query);
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Since needs links validator by name, we join by full_name
         $vQuery = "SELECT u.id, COUNT(d.id) as confirmed_deliveries 
                    FROM users u
-                   LEFT JOIN needs n ON n.validator_name = u.full_name
+                   LEFT JOIN needs n ON n.validator_id = u.id
                    LEFT JOIN donations d ON d.need_id = n.id AND d.status = 'Remis'
                    WHERE u.role = 'validator'
                    GROUP BY u.id";
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $allowed_roles = ['donor', 'validator', 'partner', 'admin'];
             if (!in_array($data->new_role, $allowed_roles)) throw new Exception("Invalid role");
 
-            $query = "UPDATE users SET role = :r WHERE id = :id";
+            $query = "UPDATE users SET role = :r" . ($data->new_role === 'validator' ? ", score = IFNULL(score, 20)" : "") . " WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->execute([':r' => $data->new_role, ':id' => $data->user_id]);
 

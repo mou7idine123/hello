@@ -11,11 +11,12 @@ $db = $database->getConnection();
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Fetch pending verifications
     try {
-        $query = "SELECT d.*, u.full_name as donor_name, n.type as need_type, n.district 
+        $query = "SELECT d.*, u.full_name as donor_name, n.type as need_type, n.district,
+                         n.description, n.required_mru, n.collected_mru, n.beneficiaries 
                   FROM donations d
                   LEFT JOIN users u ON d.user_id = u.id
                   LEFT JOIN needs n ON d.need_id = n.id
-                  WHERE d.status = 'Reçu soumis'
+                  WHERE d.status = 'en_attente'
                   ORDER BY d.created_at ASC";
 
         $stmt = $db->query($query);
@@ -45,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Start transaction
         $db->beginTransaction();
 
-        $donationQuery = "SELECT need_id, amount, status FROM donations WHERE id = :id FOR UPDATE";
+        $donationQuery = "SELECT need_id, user_id, amount, status FROM donations WHERE id = :id FOR UPDATE";
         $stmt0 = $db->prepare($donationQuery);
         $stmt0->execute([':id' => $id]);
         $donation = $stmt0->fetch(PDO::FETCH_ASSOC);
@@ -69,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $hedera_seq = '0.0.' . rand(100000, 999999) . '-seq-' . time();
 
             // Update donation status
-            $query = "UPDATE donations SET status = 'Vérifié', admin_note = :note, hedera_sequence = :hseq WHERE id = :id";
+            $query = "UPDATE donations SET status = 'verifie', admin_note = :note, hedera_sequence = :hseq WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->execute([':note' => $admin_note, ':hseq' => $hedera_seq, ':id' => $id]);
 
@@ -78,17 +79,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmtN = $db->prepare($updateNeed);
             $stmtN->execute([':net' => $net_amount, ':need_id' => $donation['need_id']]);
 
+            // Check if the need is now funded
+            $check_query = "SELECT id, required_mru, collected_mru, type, status FROM needs WHERE id = :need_id FOR UPDATE";
+            $check_stmt = $db->prepare($check_query);
+            $check_stmt->execute([':need_id' => $donation['need_id']]);
+            $need = $check_stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($need && (float)$need['collected_mru'] >= (float)$need['required_mru'] && $need['status'] === 'ouvert') {
+                // Change status to 'finance'
+                $final_query = "UPDATE needs SET status = 'finance' WHERE id = :need_id";
+                $db->prepare($final_query)->execute([':need_id' => $donation['need_id']]);
+
+                // Notify Assigned Partner that the need is now funded
+                $partner_query = "SELECT po.partner_id, p.user_id 
+                                 FROM partner_orders po 
+                                 JOIN partners p ON po.partner_id = p.id 
+                                 WHERE po.need_id = :nid LIMIT 1";
+                $pStmt = $db->prepare($partner_query);
+                $pStmt->execute([':nid' => $donation['need_id']]);
+                $partner = $pStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($partner) {
+                    $notif_query = "INSERT INTO notifications (user_id, title, message, type) 
+                                   VALUES (:uuid, 'Besoin Financé !', 'Un besoin auquel vous êtes assigné est désormais entièrement financé. Vous pouvez commencer la préparation.', 'info')";
+                    $db->prepare($notif_query)->execute([':uuid' => $partner['user_id']]);
+                }
+            }
+
             // Get Validator ID to notify them
-            $qVal = "SELECT u.id FROM needs n JOIN users u ON n.validator_name = u.full_name WHERE n.id = :nid LIMIT 1";
+            $qVal = "SELECT validator_id FROM needs WHERE id = :nid LIMIT 1";
             $sVal = $db->prepare($qVal);
             $sVal->execute([':nid' => $donation['need_id']]);
-            $valUser = $sVal->fetch(PDO::FETCH_ASSOC);
+            $valNeeds = $sVal->fetch(PDO::FETCH_ASSOC);
 
-            if ($valUser) {
+            if ($valNeeds && $valNeeds['validator_id']) {
                 $nQuery = "INSERT INTO notifications (user_id, title, message, type) VALUES (:uid, :title, :msg, 'info')";
                 $nStmt = $db->prepare($nQuery);
                 $nStmt->execute([
-                    ':uid' => $valUser['id'],
+                    ':uid' => $valNeeds['validator_id'],
                     ':title' => "Don Vérifié ! Confirmez la remise.",
                     ':msg' => "Un don de {$donation['amount']} MRU a été vérifié pour votre besoin. Confirmez la remise."
                 ]);
@@ -106,8 +134,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             }
 
         } else if ($action === 'reject') {
-            // Update donation status to "Rejeté"
-            $query = "UPDATE donations SET status = 'Rejeté', admin_note = :note, rejection_reason = :reason WHERE id = :id";
+            // Update donation status to "refuse"
+            $query = "UPDATE donations SET status = 'refuse', admin_note = :note, rejection_reason = :reason WHERE id = :id";
             $stmt = $db->prepare($query);
             $stmt->execute([':note' => $admin_note, ':reason' => $rejection_reason, ':id' => $id]);
 

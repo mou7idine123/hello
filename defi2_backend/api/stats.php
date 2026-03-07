@@ -16,7 +16,7 @@ $stats = [
 if($db){
     try {
         // Calculate real stats
-        $stats['families_helped'] = (int) $db->query("SELECT SUM(beneficiaries) FROM needs WHERE status IN ('Confirmed')")->fetchColumn();
+        $stats['families_helped'] = (int) $db->query("SELECT SUM(beneficiaries) FROM needs WHERE status = 'complete'")->fetchColumn();
         $stats['mru_collected'] = (int) $db->query("SELECT SUM(amount) FROM donations WHERE status = 'Remis'")->fetchColumn();
         $stats['confirmed_donations'] = (int) $db->query("SELECT COUNT(*) FROM donations WHERE status IN ('Vérifié', 'Remis')")->fetchColumn();
 

@@ -25,6 +25,33 @@ CREATE DATABASE ihsan_platform;
 
 use ihsan_platform;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `id` int NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `is_anonymous` tinyint(1) DEFAULT '0',
+  `role` enum('donor','partner','validator','admin') DEFAULT 'donor',
+  `is_active` tinyint(1) DEFAULT '1',
+  `reputation_score` int DEFAULT '0',
+  `score` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`id`, `full_name`, `email`, `password`, `phone`, `is_anonymous`, `role`, `is_active`, `reputation_score`, `created_at`) VALUES
+(1, 'Admin System', 'admin@ihsan.org', '$2y$12$2w65lhpR0ZSvHm9YEvsyGOAQGcJdJofiCQZMxQ8prX7c9H7fygRRS', NULL, 0, 'admin', 1, 0, '2026-03-03 15:17:57');
+
 CREATE TABLE `announcements` (
   `id` int NOT NULL,
   `title` varchar(255) NOT NULL,
@@ -65,14 +92,13 @@ CREATE TABLE `donations` (
   `sha256_hash` varchar(64) DEFAULT NULL,
   `bank_reference` varchar(50) DEFAULT NULL,
   `selected_bank` varchar(100) DEFAULT NULL,
-  `status` enum('en_attente','verifie','complete','annule') DEFAULT 'en_attente',
+  `status` enum('en_attente','verifie','refuse') DEFAULT 'en_attente',
   `is_anonymous` tinyint(1) DEFAULT '0',
   `receipt_path` varchar(255) DEFAULT NULL,
   `admin_note` text,
   `rejection_reason` text,
   `delivery_photo_path` varchar(255) DEFAULT NULL,
   `delivery_message` text,
-  `gps_coordinates` varchar(100) DEFAULT NULL,
   `hedera_sequence` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -90,11 +116,16 @@ CREATE TABLE `needs` (
   `full_description` text,
   `required_mru` decimal(10,2) NOT NULL,
   `collected_mru` decimal(10,2) DEFAULT '0.00',
-  `validator_name` varchar(255) DEFAULT NULL,
+  `validator_id` int NOT NULL,
   `beneficiaries` int DEFAULT NULL,
   `deadline_date` datetime DEFAULT NULL,
-  `status` enum('ouvert','finance','en_cours','complete','annule') DEFAULT 'ouvert',
+  `gps_coordinates` varchar(100) DEFAULT NULL,
+  `status` enum('ouvert','finance','en_cours','remise_a_verifier','complete','annule') DEFAULT 'ouvert',
+   `remise_proof_path` varchar(255) DEFAULT NULL,
+   `remise_message` text,
+   `remise_time` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -132,11 +163,6 @@ CREATE TABLE `partners` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Dumping data for table `partners`
---
-
-INSERT INTO `partners` (`id`, `user_id`, `business_name`, `address`, `specialties`, `opening_hours`, `photo_path`, `bank_account_number`, `bank_name`, `bank_account_holder`, `created_at`) VALUES
-(1, 1, 'Restaurant Al Khair', 'Nouakchott, Tevragh Zeina', 'Repas chauds, Paniers Ramadan', '08:00 - 22:00', NULL, NULL, NULL, NULL, '2026-03-03 22:47:06');
 
 -- --------------------------------------------------------
 
@@ -147,13 +173,12 @@ INSERT INTO `partners` (`id`, `user_id`, `business_name`, `address`, `specialtie
 CREATE TABLE `partner_orders` (
   `id` int NOT NULL,
   `partner_id` int NOT NULL,
-  `donation_id` int DEFAULT NULL,
-  `item_type` varchar(255) NOT NULL,
-  `quantity` int DEFAULT '1',
+  `orders` varchar(255) NOT NULL,
   `scheduled_time` datetime DEFAULT NULL,
   `status` enum('en_attente','en_preparation','pret_pour_collecte','remis') DEFAULT 'en_attente',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `need_id` int DEFAULT NULL
+  `need_id` int DEFAULT NULL,
+  `validator_id` int NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 
@@ -185,34 +210,6 @@ CREATE TABLE `platform_settings` (
   `setting_value` varchar(255) NOT NULL,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `users`
---
-
-CREATE TABLE `users` (
-  `id` int NOT NULL,
-  `full_name` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `phone` varchar(20) DEFAULT NULL,
-  `is_anonymous` tinyint(1) DEFAULT '0',
-  `role` enum('donor','partner','validator','admin') DEFAULT 'donor',
-  `is_active` tinyint(1) DEFAULT '1',
-  `reputation_score` int DEFAULT '0',
-  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `users`
---
-
-INSERT INTO `users` (`id`, `full_name`, `email`, `password`, `phone`, `is_anonymous`, `role`, `is_active`, `reputation_score`, `created_at`) VALUES
-(1, 'Admin System', 'admin@ihsan.org', '$2y$12$2w65lhpR0ZSvHm9YEvsyGOAQGcJdJofiCQZMxQ8prX7c9H7fygRRS', NULL, 0, 'admin', 1, 0, '2026-03-03 15:17:57');
-
-
 --
 -- Indexes for table `announcements`
 --
@@ -260,7 +257,6 @@ ALTER TABLE `partners`
 ALTER TABLE `partner_orders`
   ADD PRIMARY KEY (`id`),
   ADD KEY `partner_id` (`partner_id`),
-  ADD KEY `donation_id` (`donation_id`),
   ADD KEY `need_id` (`need_id`);
 
 --
@@ -284,9 +280,6 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
 
---
--- AUTO_INCREMENT for dumped tables
---
 
 --
 -- AUTO_INCREMENT for table `announcements`
@@ -360,6 +353,12 @@ ALTER TABLE `donations`
   ADD CONSTRAINT `donations_ibfk_2` FOREIGN KEY (`need_id`) REFERENCES `needs` (`id`);
 
 --
+-- Constraints for table `needs`
+--
+ALTER TABLE `needs`
+  ADD CONSTRAINT `needs_ibfk_1` FOREIGN KEY (`validator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `notifications`
 --
 ALTER TABLE `notifications`
@@ -376,13 +375,14 @@ ALTER TABLE `partners`
 --
 ALTER TABLE `partner_orders`
   ADD CONSTRAINT `partner_orders_ibfk_1` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `partner_orders_ibfk_2` FOREIGN KEY (`donation_id`) REFERENCES `donations` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `partner_orders_ibfk_3` FOREIGN KEY (`need_id`) REFERENCES `needs` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `partner_orders_ibfk_3` FOREIGN KEY (`need_id`) REFERENCES `needs` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `partner_orders_ibfk_4` FOREIGN KEY (`validator_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `partner_payments`
 --
 ALTER TABLE `partner_payments`
-  ADD CONSTRAINT `partner_payments_ibfk_1` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `partner_payments_ibfk_1` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `partner_payments_ibfk_2` FOREIGN KEY (`order_id`) REFERENCES `partner_orders` (`id`) ON DELETE SET NULL;
 COMMIT;
 

@@ -5,8 +5,22 @@ import api from '../api';
 import {
     ShieldCheck, PlusCircle, AlertCircle,
     CheckCircle, Clock, ChefHat, MapPin,
-    X, Send, ArrowRight, Map, List
+    X, Send, ArrowRight, Map, List, Eye, Building2, Utensils
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix Leaflet's default marker icon issue in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIcon2x,
+    shadowUrl: markerShadow,
+});
 import MapComponent from '../components/MapComponent';
 
 const ValidatorDashboard = () => {
@@ -22,6 +36,7 @@ const ValidatorDashboard = () => {
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
     const [orderedSuccess, setOrderedSuccess] = useState(false);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
+    const [viewingNeed, setViewingNeed] = useState(null);
 
     useEffect(() => {
         fetchDashboard();
@@ -116,14 +131,14 @@ const ValidatorDashboard = () => {
                 <div className="admin-card-glass tab-green" style={{ borderTop: 'none', borderLeft: '6px solid var(--emerald)' }}>
                     <div className="kpi-card-inner">
                         <div className="kpi-content">
-                            <span className="kpi-label">Réputation</span>
-                            <div className="kpi-value-large">{stats.reputation_score} <span style={{ fontSize: '1.125rem', color: 'var(--text-muted)', fontWeight: 600 }}>/ 100</span></div>
-                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Score de fiabilité active</span>
+                            <span className="kpi-label">Score Validateur</span>
+                            <div className="kpi-value-large">{stats.validator_score} <span style={{ fontSize: '1.125rem', color: 'var(--text-muted)', fontWeight: 600 }}>pts</span></div>
+                            <span className="kpi-subtext" style={{ fontSize: '0.875rem' }}>Indice de performance terrain</span>
                         </div>
                         <div className="progress-circle-wrap">
                             <svg viewBox="0 0 36 36" className="progress-circle green">
                                 <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path className="circle" strokeDasharray={`${stats.reputation_score}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path className="circle" strokeDasharray={`${Math.min(100, (stats.validator_score / 50) * 100)}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                             </svg>
                             <ShieldCheck size={18} className="center-icon" color="var(--emerald)" />
                         </div>
@@ -296,7 +311,15 @@ const ValidatorDashboard = () => {
                                                 </span>
                                             )}
                                         </td>
-                                        <td>
+                                        <td style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <button
+                                                onClick={() => setViewingNeed(n)}
+                                                className="btn btn-outline"
+                                                title="Voir les détails"
+                                                style={{ padding: '0.5rem', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            >
+                                                <Eye size={18} />
+                                            </button>
                                             {(n.status === 'finance' || n.status === 'en_cours') && !n.order_status && (
                                                 <button
                                                     onClick={() => setSelectedNeed(n)}
@@ -407,7 +430,134 @@ const ValidatorDashboard = () => {
                 </div>
             )}
 
+            {/* View Details Modal */}
+            {viewingNeed && (
+                <div className="admin-modal-overlay" onClick={() => setViewingNeed(null)}>
+                    <div className="admin-card-soft" style={{ width: '100%', maxWidth: '600px', height: '85vh', overflowY: 'auto', padding: '2.5rem', position: 'relative' }} onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setViewingNeed(null)}
+                            style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                        >
+                            <X size={24} />
+                        </button>
+
+                        <h3 style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-main)', marginBottom: '1.5rem', paddingRight: '2rem' }}>Diffusé: {viewingNeed.type}</h3>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                            <div className="admin-field">
+                                <label className="admin-label">Quartier</label>
+                                <div style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <MapPin size={18} color="var(--primary)" /> {viewingNeed.district}
+                                </div>
+                            </div>
+                            <div className="admin-field">
+                                <label className="admin-label">Bénéficiaires</label>
+                                <div style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-main)' }}>{viewingNeed.beneficiaries} familles</div>
+                            </div>
+                        </div>
+
+                        <div className="admin-field" style={{ marginBottom: '1.5rem' }}>
+                            <label className="admin-label">Description Rapide</label>
+                            <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '0.9rem', color: 'var(--text-muted)', minHeight: '80px' }}>
+                                {viewingNeed.description}
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem', background: 'var(--primary-light)', padding: '1.5rem', borderRadius: 'var(--radius-xl)' }}>
+                            <div>
+                                <label className="admin-label" style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>Montant Requis</label>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{Number(viewingNeed.required_mru).toLocaleString()} <span style={{ fontSize: '1rem' }}>MRU</span></div>
+                            </div>
+                            <div>
+                                <label className="admin-label" style={{ color: 'var(--primary)', marginBottom: '0.25rem' }}>Montant Collecté</label>
+                                <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)' }}>{Number(viewingNeed.collected_mru).toLocaleString()} <span style={{ fontSize: '1rem' }}>MRU</span></div>
+                            </div>
+                        </div>
+
+                        {viewingNeed.gps_coordinates && (
+                            <div className="admin-field" style={{ marginBottom: '1.5rem' }}>
+                                <label className="admin-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <MapPin size={14} color="var(--primary)" /> Emplacement du Besoin
+                                </label>
+                                <div style={{ height: '200px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                    <MapContainer
+                                        center={[parseFloat(viewingNeed.gps_coordinates.split(',')[0]), parseFloat(viewingNeed.gps_coordinates.split(',')[1])]}
+                                        zoom={15}
+                                        style={{ height: '100%', width: '100%' }}
+                                    >
+                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                        <Marker position={[parseFloat(viewingNeed.gps_coordinates.split(',')[0]), parseFloat(viewingNeed.gps_coordinates.split(',')[1])]} />
+                                    </MapContainer>
+                                </div>
+                            </div>
+                        )}
+
+                        {viewingNeed.partner_name && (
+                            <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8fafc', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
+                                <h4 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Building2 size={18} /> Partenaire Assigné
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                    <div className="admin-field">
+                                        <label className="admin-label">Établissement</label>
+                                        <div style={{ fontWeight: 700, color: 'var(--text-main)' }}>{viewingNeed.partner_name}</div>
+                                    </div>
+                                    <div className="admin-field">
+                                        <label className="admin-label">Horaires</label>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{viewingNeed.partner_hours || 'Non spécifiés'}</div>
+                                    </div>
+                                    {viewingNeed.partner_specialties && (
+                                        <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                                            <label className="admin-label">Spécialités</label>
+                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{viewingNeed.partner_specialties}</div>
+                                        </div>
+                                    )}
+                                    <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                                        <label className="admin-label">Adresse du Partenaire</label>
+                                        <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                            <MapPin size={14} /> {viewingNeed.partner_address}
+                                        </div>
+                                    </div>
+                                    {viewingNeed.scheduled_time && (
+                                        <div className="admin-field" style={{ gridColumn: '1 / -1' }}>
+                                            <label className="admin-label">Heure de Collecte Prévue</label>
+                                            <div style={{ fontWeight: 800, color: 'var(--warning)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <Clock size={16} /> {new Date(viewingNeed.scheduled_time).toLocaleString()}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {viewingNeed.partner_gps && (
+                            <div className="admin-field" style={{ marginBottom: '1rem' }}>
+                                <label className="admin-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <Building2 size={14} color="var(--primary)" /> Localisation du Partenaire
+                                </label>
+                                <div style={{ height: '200px', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                                    <MapContainer
+                                        center={[parseFloat(viewingNeed.partner_gps.split(',')[0]), parseFloat(viewingNeed.partner_gps.split(',')[1])]}
+                                        zoom={15}
+                                        style={{ height: '100%', width: '100%' }}
+                                    >
+                                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                        <Marker position={[parseFloat(viewingNeed.partner_gps.split(',')[0]), parseFloat(viewingNeed.partner_gps.split(',')[1])]} />
+                                    </MapContainer>
+                                </div>
+                            </div>
+                        )}
+
+
+                        <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button className="btn btn-outline" onClick={() => setViewingNeed(null)}>Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <style>
+
                 {`
                 @keyframes spin {
                     to { transform: rotate(360deg); }

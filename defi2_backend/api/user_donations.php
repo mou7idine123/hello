@@ -32,7 +32,11 @@ if (!$db) {
 }
 
 try {
-    $query = "SELECT d.id, d.amount, d.status, d.tracking_id as tracking_id, d.created_at as date, n.type, n.district 
+    $query = "SELECT d.id, d.amount, d.status, d.tracking_id as tracking_id, d.created_at as date, 
+                     d.sha256_hash, d.bank_reference, d.selected_bank, d.receipt_path, 
+                     d.delivery_photo_path, d.delivery_message,
+                     n.type, n.district, n.description, n.required_mru, n.collected_mru, 
+                     n.beneficiaries, n.remise_proof_path, n.remise_message, n.status as need_status 
               FROM donations d
               LEFT JOIN needs n ON d.need_id = n.id
               WHERE d.user_id = ?

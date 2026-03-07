@@ -22,20 +22,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     ];
 
     try {
-        // Reputation score
-        $q_user = "SELECT reputation_score FROM users WHERE id = :id";
+        // Validator score
+        $q_user = "SELECT score FROM users WHERE id = :id";
         $s1 = $db->prepare($q_user);
         $s1->execute([':id' => $user->id]);
-        $stats['reputation_score'] = $s1->fetch(PDO::FETCH_ASSOC)['reputation_score'] ?? 0;
+        $stats['validator_score'] = $s1->fetch(PDO::FETCH_ASSOC)['score'] ?? 20;
 
-        // Active Needs with their order status
-        $q_needs = "SELECT n.*, po.status as order_status, po.id as order_id 
+        // Active Needs with their order status and partner info
+        $q_needs = "SELECT n.*, 
+                          po.status as order_status, po.id as order_id, po.scheduled_time,
+                          p.business_name as partner_name, p.address as partner_gps, 
+                          p.opening_hours as partner_hours, p.specialties as partner_specialties
                    FROM needs n 
                    LEFT JOIN partner_orders po ON n.id = po.need_id
-                   WHERE n.validator_name = :vname 
+                   LEFT JOIN partners p ON po.partner_id = p.id
+                   WHERE n.validator_id = :vid 
                    ORDER BY n.created_at DESC";
         $s2 = $db->prepare($q_needs);
-        $s2->execute([':vname' => $user->full_name]);
+        $s2->execute([':vid' => $user->id]);
         $stats['needs_list'] = $s2->fetchAll(PDO::FETCH_ASSOC);
 
         // Calculate some stats from needs
@@ -44,10 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $needIds = [];
 
         foreach($stats['needs_list'] as $need) {
-            if ($need['status'] === 'Open' || $need['status'] === 'Funded') {
+            if ($need['status'] === 'ouvert' || $need['status'] === 'finance' || $need['status'] === 'en_cours') {
                 $activeCount++;
             }
-            if ($need['status'] === 'Funded') { // Count families only for funded needs or general
+            if ($need['status'] === 'finance') { // Count families only for funded needs or general
                 $families += (int)$need['beneficiaries'];
             }
             $needIds[] = $need['id'];
@@ -59,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Donations to process (Vérifié -> waiting for validator to confirm delivery Remis)
         if (count($needIds) > 0) {
             $inClause = implode(',', array_fill(0, count($needIds), '?'));
-            $q_don = "SELECT COUNT(*) as count FROM donations WHERE status = 'Vérifié' AND need_id IN ($inClause)";
+            $q_don = "SELECT COUNT(*) as count FROM donations WHERE status = 'verifie' AND need_id IN ($inClause)";
             $s3 = $db->prepare($q_don);
             $s3->execute($needIds);
             $stats['donations_to_process'] = $s3->fetch(PDO::FETCH_ASSOC)['count'];

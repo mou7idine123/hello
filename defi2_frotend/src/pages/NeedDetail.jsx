@@ -41,11 +41,10 @@ const NeedDetail = () => {
     const percent = Math.min(Math.round((need.collected_mru / need.required_mru) * 100), 100);
     const isOpen = need.status === 'Open';
 
-    // Mock validator data (to be replaced with API data)
     const validator = {
-        name: need.validator,
-        score: 94,
-        confirmedDeliveries: 23,
+        name: need.validator || 'Validateur IHSAN',
+        score: need.validator_score || 94,
+        confirmedDeliveries: need.confirmed_deliveries || 0,
     };
 
     return (
@@ -103,6 +102,36 @@ const NeedDetail = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Impact Proof Section (Show only if completed) */}
+                            {need.status === 'complete' && need.remise_proof_path && (
+                                <div className="dashboard-panel" style={{ padding: 0, overflow: 'hidden', border: '2px solid var(--primary)' }}>
+                                    <div style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                        <div style={{ padding: '0.4rem', borderRadius: '8px', background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+                                            <CheckCircle2 size={20} />
+                                        </div>
+                                        <div>
+                                            <div style={{ fontWeight: 800, fontSize: '1rem' }}>Impact Réel & Vérifié</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Remise effectuée le {new Date(need.remise_time).toLocaleDateString()}</div>
+                                        </div>
+                                    </div>
+                                    <div style={{ position: 'relative' }}>
+                                        <img
+                                            src={`http://localhost:8000/${need.remise_proof_path}`}
+                                            alt="Preuve de remise"
+                                            style={{ width: '100%', height: '300px', objectFit: 'cover', display: 'block' }}
+                                        />
+                                        <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '0.4rem 0.8rem', borderRadius: '999px', fontSize: '0.7rem', backdropFilter: 'blur(4px)' }}>
+                                            Visages protégés pour la dignité
+                                        </div>
+                                    </div>
+                                    <div style={{ padding: '1.5rem', background: 'var(--surface)' }}>
+                                        <blockquote style={{ borderLeft: '3px solid var(--primary)', paddingLeft: '1.25rem', margin: 0, color: 'var(--text-main)', fontStyle: 'italic', fontSize: '1.05rem', lineHeight: 1.6 }}>
+                                            « {need.remise_message} »
+                                        </blockquote>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Full description */}
                             {need.full_description && (

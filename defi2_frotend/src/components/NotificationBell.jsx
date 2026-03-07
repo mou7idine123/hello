@@ -58,53 +58,150 @@ const NotificationBell = () => {
     };
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div style={{ position: 'relative' }} ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="p-2 text-text-muted hover:text-primary transition-all relative flex items-center justify-center bg-transparent border-none cursor-pointer"
+                style={{
+                    padding: '0.5rem',
+                    color: 'var(--text-muted)',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
             >
                 <Bell size={24} />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                    <span style={{
+                        position: 'absolute',
+                        top: '4px',
+                        right: '4px',
+                        backgroundColor: 'var(--danger)',
+                        color: 'white',
+                        fontSize: '10px',
+                        fontWeight: 'bold',
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid white'
+                    }}>
                         {unreadCount}
                     </span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute top-full right-0 mt-3 w-80 glass rounded-2xl shadow-premium z-50 overflow-hidden border-border animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="p-4 border-b border-border flex justify-between items-center bg-white/50">
-                        <h3 className="text-sm font-bold text-text-main">Notifications</h3>
+                <div className="glass shadow-premium animate-in fade-in slide-in-from-top-2" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: '0',
+                    marginTop: '0.75rem',
+                    width: '320px',
+                    borderRadius: '16px',
+                    zIndex: 50,
+                    overflow: 'hidden',
+                    borderColor: 'var(--border)'
+                }}>
+                    <div style={{
+                        padding: '1rem',
+                        borderBottom: '1px solid var(--border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)'
+                    }}>
+                        <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>Notifications</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllAsRead}
-                                className="text-xs font-bold text-primary hover:text-primary-dark transition-colors bg-transparent border-none cursor-pointer"
+                                style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 'bold',
+                                    color: 'var(--primary)',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'color 0.2s',
+                                    padding: 0
+                                }}
+                                onMouseOver={(e) => e.currentTarget.style.color = 'var(--primary-dark)'}
+                                onMouseOut={(e) => e.currentTarget.style.color = 'var(--primary)'}
                             >
                                 Tout marquer lu
                             </button>
                         )}
                     </div>
 
-                    <div className="max-h-[400px] overflow-y-auto">
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                         {notifications.length === 0 ? (
-                            <div className="p-10 text-center text-text-muted text-sm font-medium">
+                            <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 500 }}>
                                 Aucune notification.
                             </div>
                         ) : (
                             notifications.map(n => (
                                 <div
                                     key={n.id}
-                                    className={`p-4 border-b border-border/50 flex gap-3 transition-all hover:bg-white/40 ${n.is_read ? 'bg-transparent' : 'bg-primary/5'}`}
+                                    style={{
+                                        padding: '1rem',
+                                        borderBottom: '1px solid rgba(226, 232, 240, 0.5)',
+                                        display: 'flex',
+                                        gap: '0.75rem',
+                                        transition: 'all 0.2s',
+                                        backgroundColor: n.is_read ? 'transparent' : 'rgba(45, 97, 255, 0.05)'
+                                    }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.4)'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = n.is_read ? 'transparent' : 'rgba(45, 97, 255, 0.05)'}
                                 >
-                                    <div className="flex-1">
-                                        <h4 className={`text-sm mb-1 ${n.is_read ? 'font-semibold text-text-main' : 'font-extrabold text-primary'}`}>{n.title}</h4>
-                                        <p className="text-xs text-text-muted leading-relaxed mb-2">{n.message}</p>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-40">{new Date(n.created_at).toLocaleDateString()}</span>
+                                    <div style={{ flex: 1 }}>
+                                        <h4 style={{
+                                            fontSize: '0.875rem',
+                                            marginBottom: '0.25rem',
+                                            marginTop: 0,
+                                            fontWeight: n.is_read ? 600 : 800,
+                                            color: n.is_read ? 'var(--text-main)' : 'var(--primary)'
+                                        }}>{n.title}</h4>
+                                        <p style={{
+                                            fontSize: '0.75rem',
+                                            color: 'var(--text-muted)',
+                                            lineHeight: 1.5,
+                                            marginBottom: '0.5rem',
+                                            marginTop: 0
+                                        }}>{n.message}</p>
+                                        <span style={{
+                                            fontSize: '10px',
+                                            fontWeight: 'bold',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.05em',
+                                            opacity: 0.4
+                                        }}>{new Date(n.created_at).toLocaleDateString()}</span>
                                     </div>
                                     {!n.is_read && (
                                         <button
                                             onClick={() => markAsRead(n.id)}
-                                            className="self-center p-1.5 rounded-full bg-emerald-light text-emerald hover:bg-emerald/20 transition-all border-none cursor-pointer"
+                                            style={{
+                                                alignSelf: 'center',
+                                                padding: '0.375rem',
+                                                borderRadius: '50%',
+                                                backgroundColor: 'var(--emerald-light)',
+                                                color: 'var(--emerald)',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'}
+                                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--emerald-light)'}
                                             title="Marquer comme lu"
                                         >
                                             <Check size={14} strokeWidth={3} />

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { MapPin, ShieldCheck } from 'lucide-react';
+import { MapPin, ShieldCheck, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const NeedsCatalog = () => {
@@ -10,7 +10,7 @@ const NeedsCatalog = () => {
     const [needs, setNeeds] = useState([]);
     const [filterType, setFilterType] = useState('All');
     const [filterDistrict, setFilterDistrict] = useState('All');
-    const [filterStatus, setFilterStatus] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('ouvert');
 
     useEffect(() => {
         // Fetch from PHP backend
@@ -101,14 +101,24 @@ const NeedsCatalog = () => {
                                     </div>
                                 </div>
 
-                                <div className="card-footer">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-full bg-emerald-light flex items-center justify-center text-emerald">
-                                            <ShieldCheck size={14} strokeWidth={3} />
+                                <div className="card-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: 'auto' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-emerald-light flex items-center justify-center text-emerald" style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981' }}>
+                                                <ShieldCheck size={14} strokeWidth={3} />
+                                            </div>
+                                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main)' }}>{need.validator}</span>
                                         </div>
-                                        <span className="text-xs uppercase tracking-wider opacity-60">Verified by</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                <Star size={12} fill="#f59e0b" color="#f59e0b" />
+                                                <span style={{ fontWeight: 800, color: '#f59e0b' }}>{need.validator_score || 0}</span>
+                                            </div>
+                                            <div style={{ padding: '0.2rem 0.4rem', borderRadius: '4px', background: '#f1f5f9', fontWeight: 600 }}>
+                                                {need.confirmed_deliveries || 0} ✓
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="text-text-main font-bold">{need.validator}</div>
                                 </div>
                             </div>
                         );

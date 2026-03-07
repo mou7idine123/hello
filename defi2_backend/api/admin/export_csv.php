@@ -13,7 +13,10 @@ $database = new Database();
 $db = $database->getConnection();
 
 try {
-    $query = "SELECT id, type, district, required_mru, collected_mru, validator_name, beneficiaries, status, created_at FROM needs ORDER BY created_at DESC";
+    $query = "SELECT n.id, n.type, n.district, n.required_mru, n.collected_mru, u.full_name as validator_name, n.beneficiaries, n.status, n.created_at 
+              FROM needs n 
+              LEFT JOIN users u ON n.validator_id = u.id 
+              ORDER BY n.created_at DESC";
     $stmt = $db->query($query);
     $needs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

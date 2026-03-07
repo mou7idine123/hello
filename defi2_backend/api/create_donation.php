@@ -8,71 +8,56 @@ require_once '../config/Database.php';
 $database = new Database();
 $db = $database->getConnection();
 
-$data = json_decode(file_get_contents("php://input"));
 
-if ($db && !empty($data->user_id) && !empty($data->need_id) && !empty($data->amount) && !empty($data->tracking_id)) {
+$user_id = $_POST['user_id'] ?? null;
+$need_id = $_POST['need_id'] ?? null;
+$amount = $_POST['amount'] ?? null;
+$tracking_id = $_POST['tracking_id'] ?? null;
+$is_anonymous = isset($_POST['is_anonymous']) ? (int)$_POST['is_anonymous'] : 0;
+$selected_bank = $_POST['selected_bank'] ?? null;
+$bank_reference = $_POST['bank_reference'] ?? null;
+
+if ($db && !empty($user_id) && !empty($need_id) && !empty($amount) && !empty($tracking_id)) {
     try {
         $db->beginTransaction();
 
-        // Generate SHA-256 Hash for the donation (immutability requirement)
-        $sha256_hash = hash('sha256', $data->tracking_id . microtime());
+        // Handle Receipt Upload
+        $receipt_path = null;
+        if (isset($_FILES['receipt']) && $_FILES['receipt']['error'] == 0) {
+            $upload_dir = '../uploads/receipts/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+            $file_ext = pathinfo($_FILES['receipt']['name'], PATHINFO_EXTENSION);
+            $filename = 'receipt_' . $tracking_id . '_' . time() . '.' . $file_ext;
+            $target_file = $upload_dir . $filename;
+            
+            if (move_uploaded_file($_FILES['receipt']['tmp_name'], $target_file)) {
+                $receipt_path = 'uploads/receipts/' . $filename;
+            }
+        }
 
-        $query = "INSERT INTO donations (user_id, need_id, amount, tracking_id, sha256_hash, is_anonymous, status) 
-                  VALUES (:user_id, :need_id, :amount, :tracking_id, :sha256_hash, :is_anonymous, 'En attente de virement')";
+        // Generate SHA-256 Hash for the donation (immutability/fingerprint requirement)
+        // Hashing the tracking_id and microtime ensures a unique, verifiable ID for this contribution
+        $sha256_hash = hash('sha256', $tracking_id . microtime());
+
+        $query = "INSERT INTO donations (user_id, need_id, amount, tracking_id, sha256_hash, is_anonymous, selected_bank, bank_reference, receipt_path, status) 
+                  VALUES (:user_id, :need_id, :amount, :tracking_id, :sha256_hash, :is_anonymous, :selected_bank, :bank_reference, :receipt_path, 'en_attente')";
         
         $stmt = $db->prepare($query);
 
-        $stmt->bindParam(':user_id', $data->user_id);
-        $stmt->bindParam(':need_id', $data->need_id);
-        $stmt->bindParam(':amount', $data->amount);
-        $stmt->bindParam(':tracking_id', $data->tracking_id);
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->bindParam(':need_id', $need_id);
+        $stmt->bindParam(':amount', $amount);
+        $stmt->bindParam(':tracking_id', $tracking_id);
         $stmt->bindParam(':sha256_hash', $sha256_hash);
-        $stmt->bindParam(':is_anonymous', $data->is_anonymous, PDO::PARAM_BOOL);
+        $stmt->bindParam(':is_anonymous', $is_anonymous, PDO::PARAM_INT);
+        $stmt->bindParam(':selected_bank', $selected_bank);
+        $stmt->bindParam(':bank_reference', $bank_reference);
+        $stmt->bindParam(':receipt_path', $receipt_path);
 
         if ($stmt->execute()) {
             $donation_id = $db->lastInsertId();
-
-            // 1. Update collected_mru in needs table
-            $update_query = "UPDATE needs SET collected_mru = collected_mru + :amount WHERE id = :need_id";
-            $update_stmt = $db->prepare($update_query);
-            $update_stmt->bindParam(':amount', $data->amount);
-            $update_stmt->bindParam(':need_id', $data->need_id);
-            $update_stmt->execute();
-
-            // 2. Check if the need is now funded (Phase 2 requirement)
-            $check_query = "SELECT id, required_mru, collected_mru, type FROM needs WHERE id = :need_id FOR UPDATE";
-            $check_stmt = $db->prepare($check_query);
-            $check_stmt->execute([':need_id' => $data->need_id]);
-            $need = $check_stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($need && $need['collected_mru'] >= $need['required_mru']) {
-                // Change status to 'finance'
-                $final_query = "UPDATE needs SET status = 'finance' WHERE id = :need_id";
-                $db->prepare($final_query)->execute([':need_id' => $data->need_id]);
-
-                // 3. Automated Notification to Partner (Phase 2 requirement)
-                // For now, we find the first registered partner in the same district or just any partner
-                $partner_query = "SELECT p.id, p.user_id FROM partners p JOIN users u ON p.user_id = u.id LIMIT 1";
-                $partner = $db->query($partner_query)->fetch(PDO::FETCH_ASSOC);
-
-                if ($partner) {
-                    // Create an automated order for the partner (Phase 3 initialization)
-                    $order_query = "INSERT INTO partner_orders (partner_id, need_id, item_type, quantity, status) 
-                                   VALUES (:pid, :nid, :type, :qty, 'en_attente')";
-                    $db->prepare($order_query)->execute([
-                        ':pid' => $partner['id'],
-                        ':nid' => $data->need_id,
-                        ':type' => $need['type'],
-                        ':qty' => 1 // Simplified: 1 aid unit
-                    ]);
-
-                    // Send notification
-                    $notif_query = "INSERT INTO notifications (user_id, title, message, type) 
-                                   VALUES (:uuid, 'Nouveau don à préparer', 'Un besoin vient dêtre financé et nécessite votre préparation.', 'info')";
-                    $db->prepare($notif_query)->execute([':uuid' => $partner['user_id']]);
-                }
-            }
-
             $db->commit();
             http_response_code(201);
             echo json_encode(array("message" => "Donation created and hashed.", "donation_id" => $donation_id, "hash" => $sha256_hash));

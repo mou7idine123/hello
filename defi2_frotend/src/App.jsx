@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import NeedsCatalog from './components/NeedsCatalog';
 import Dashboard from './components/Dashboard';
 import BlockchainVerify from './components/BlockchainVerify';
+import ImpactShowcase from './components/ImpactShowcase';
 import Footer from './components/Footer';
 import Auth from './pages/Auth';
 import DonorDashboard from './pages/DonorDashboard';
@@ -12,6 +13,7 @@ import DonateTunnel from './pages/DonateTunnel';
 import ImpactProof from './pages/ImpactProof';
 import ConfirmDelivery from './pages/ConfirmDelivery';
 import PartnerDashboard from './pages/PartnerDashboard';
+import PartnerSetup from './pages/PartnerSetup';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 import AdminNeeds from './pages/AdminNeeds';
@@ -27,6 +29,7 @@ function Home() {
     <>
       <Hero />
       <NeedsCatalog />
+      <ImpactShowcase />
       <Dashboard />
       <BlockchainVerify />
     </>
@@ -45,10 +48,11 @@ function App() {
           <Route path="/needs/:id" element={<NeedDetail />} />
           <Route path="/hedera-verify" element={<HederaVerify />} />
 
+          <Route path="/impact/:donationId" element={<ImpactProof />} />
+
           {/* Protected Routes: Donor */}
           <Route path="/donor-dashboard" element={<ProtectedRoute allowedRoles={['donor']}><DonorDashboard /></ProtectedRoute>} />
           <Route path="/donate/:id" element={<ProtectedRoute allowedRoles={['donor']}><DonateTunnel /></ProtectedRoute>} />
-          <Route path="/impact/:donationId" element={<ProtectedRoute allowedRoles={['donor']}><ImpactProof /></ProtectedRoute>} />
 
           {/* Protected Routes: Validator */}
           <Route path="/validator-dashboard" element={<ProtectedRoute allowedRoles={['validator']}><ValidatorDashboard /></ProtectedRoute>} />
@@ -57,6 +61,7 @@ function App() {
 
           {/* Protected Routes: Partner */}
           <Route path="/partner/dashboard" element={<ProtectedRoute allowedRoles={['partner']}><PartnerDashboard /></ProtectedRoute>} />
+          <Route path="/partner/setup" element={<ProtectedRoute allowedRoles={['partner']}><PartnerSetup /></ProtectedRoute>} />
 
           {/* Protected Routes: Admin */}
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />

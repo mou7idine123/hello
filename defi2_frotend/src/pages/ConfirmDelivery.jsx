@@ -13,8 +13,6 @@ const ConfirmDelivery = () => {
     const [file, setFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [message, setMessage] = useState('');
-    const [gpsEnabled, setGpsEnabled] = useState(false);
-    const [gpsCoords, setGpsCoords] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
 
@@ -53,27 +51,10 @@ const ConfirmDelivery = () => {
         }
     };
 
-    const handleEnableGps = () => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const coords = `${position.coords.latitude},${position.coords.longitude}`;
-                    setGpsCoords(coords);
-                    setGpsEnabled(true);
-                },
-                (error) => {
-                    console.error("GPS error", error);
-                    alert("Erreur GPS. Veuillez autoriser la localisation.");
-                }
-            );
-        } else {
-            alert("La géolocalisation n'est pas supportée par votre navigateur.");
-        }
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!file || !gpsEnabled) return;
+        if (!file) return;
 
         setIsSubmitting(true);
 
@@ -83,7 +64,6 @@ const ConfirmDelivery = () => {
         formData.append('donation_id', id);
         formData.append('type', type);
         formData.append('message', message);
-        formData.append('gps', gpsCoords);
         formData.append('photo', file);
 
         try {
@@ -209,32 +189,6 @@ const ConfirmDelivery = () => {
                             />
                         </div>
 
-                        {/* GPS Location */}
-                        <div style={{ marginBottom: '3.5rem', padding: '2rem', background: '#f8fafc', borderRadius: 'var(--radius-2xl)', border: '1px solid var(--border)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2rem', flexWrap: 'wrap' }}>
-                                <div style={{ flex: 1 }}>
-                                    <h3 style={{ fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.5rem', fontSize: '1.125rem' }}>{t('validator.gpsActive')}</h3>
-                                    <p style={{ fontSize: '0.9375rem', color: 'var(--text-muted)', margin: 0 }}>{t('validator.gpsNotice')}</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={handleEnableGps}
-                                    className={`btn ${gpsEnabled ? 'btn-success' : ''}`}
-                                    style={{
-                                        display: 'inline-flex', alignItems: 'center', gap: '0.75rem',
-                                        padding: '1rem 1.5rem', borderRadius: 'var(--radius-xl)',
-                                        background: gpsEnabled ? 'var(--emerald)' : 'white',
-                                        color: gpsEnabled ? 'white' : 'var(--text-main)',
-                                        border: '1px solid ' + (gpsEnabled ? 'var(--emerald)' : 'var(--border)'),
-                                        fontWeight: 800, transition: 'all 0.2s',
-                                        boxShadow: gpsEnabled ? '0 8px 16px rgba(16, 185, 129, 0.2)' : 'var(--shadow-sm)'
-                                    }}
-                                >
-                                    <MapPin size={20} />
-                                    {gpsEnabled ? "Position Capturée" : "Partager ma Position"}
-                                </button>
-                            </div>
-                        </div>
 
                         {/* Submit */}
                         <div>
@@ -244,12 +198,9 @@ const ConfirmDelivery = () => {
                                 style={{
                                     width: '100%', padding: '1.25rem', fontSize: '1.25rem', fontWeight: 900,
                                     borderRadius: 'var(--radius-xl)',
-                                    opacity: (!file || !gpsEnabled || isSubmitting) ? 0.6 : 1,
-                                    cursor: (!file || !gpsEnabled || isSubmitting) ? 'not-allowed' : 'pointer',
-                                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem',
                                     boxShadow: '0 12px 24px rgba(45, 97, 255, 0.3)'
                                 }}
-                                disabled={!file || !gpsEnabled || isSubmitting}
+                                disabled={!file || isSubmitting}
                             >
                                 {isSubmitting ? (
                                     <>
@@ -263,9 +214,9 @@ const ConfirmDelivery = () => {
                                     </>
                                 )}
                             </button>
-                            {(!file || !gpsEnabled) && (
+                            {!file && (
                                 <p style={{ textAlign: 'center', color: 'var(--danger)', fontSize: '0.875rem', marginTop: '1.5rem', fontWeight: 600 }}>
-                                    Veuillez ajouter une photo et activer le GPS pour confirmer la remise.
+                                    Veuillez ajouter une photo pour confirmer la remise.
                                 </p>
                             )}
                         </div>

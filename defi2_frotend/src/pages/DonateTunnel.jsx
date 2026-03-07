@@ -7,24 +7,8 @@ import {
 } from 'lucide-react';
 
 /* ── Helpers ── */
-const genRef = (id) => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let ref = '';
-    const seed = String(id) + Date.now();
-    for (let i = 0; i < 6; i++) ref += chars[(seed.charCodeAt(i % seed.length) + i * 7) % chars.length];
-    return `IHSAN-${ref}`;
-};
 
-const banks = [
-    'BCI Mauritanie',
-    'Chinguibank',
-    'Mauribank',
-    'BMCI Mauritanie',
-    'Attijari Bank Mauritanie',
-    'GBM (Générale de Banque de Mauritanie)',
-    'BNM (Banque Nationale de Mauritanie)',
-    'Autre',
-];
+// Banks are fetched dynamically from the API
 
 /* ── Step indicator ── */
 const StepBar = ({ current, total }) => (
@@ -56,7 +40,7 @@ const StepBar = ({ current, total }) => (
     </div>
 );
 
-const stepLabels = ['Confirmation', 'Virement', 'Reçu'];
+const stepLabels = ['Confirmation', 'Virement & Reçu'];
 
 /* ═══════════════════════════════ MAIN ═══════════════════════════════ */
 const DonateTunnel = () => {
@@ -68,31 +52,38 @@ const DonateTunnel = () => {
     const [loading, setLoading] = useState(true);
     const [step, setStep] = useState(1); // 1,2,3,4(success)
 
+    const [bankAccounts, setBankAccounts] = useState([]);
+
     // Step 1 state
     const [amount, setAmount] = useState(searchParams.get('amount') || '');
     const [isAnonymous, setIsAnonymous] = useState(false);
+    const [selectedBankId, setSelectedBankId] = useState('');
+    const [bankReference, setBankReference] = useState('');
 
-    // Step 3 state
-    const [selectedBank, setSelectedBank] = useState('');
-    const [refInput, setRefInput] = useState('');
+    // Step 2 state
     const [receiptFile, setReceiptFile] = useState(null);
     const [receiptPreview, setReceiptPreview] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const fileRef = useRef();
 
-    // Generated reference code (stable per session)
-    const [donRef] = useState(() => genRef(id));
     const trackingId = `DON-${Math.floor(10000 + Math.random() * 90000)}`;
 
     useEffect(() => {
+        // Fetch Need
         axios.get('http://localhost:8000/api/needs.php')
             .then(res => {
                 const found = res.data.find(n => String(n.id) === String(id));
                 setNeed(found || null);
-                if (!found) setLoading(false);
-                else setLoading(false);
+                setLoading(false);
             })
             .catch(() => { setNeed(null); setLoading(false); });
+
+        // Fetch Banks
+        axios.get('http://localhost:8000/api/banks.php')
+            .then(res => {
+                setBankAccounts(res.data || []);
+            })
+            .catch(err => console.error("Could not fetch banks", err));
     }, [id]);
 
     const handleFileChange = (e) => {
@@ -114,17 +105,26 @@ const DonateTunnel = () => {
             return;
         }
 
-        const donationData = {
-            user_id: user.id,
-            need_id: id,
-            amount: amount,
-            tracking_id: trackingId,
-            is_anonymous: isAnonymous
-        };
+        const selectedBank = bankAccounts.find(b => String(b.id) === String(selectedBankId));
+        if (!selectedBank) return;
+
+        const formData = new FormData();
+        formData.append('user_id', user.id);
+        formData.append('need_id', id);
+        formData.append('amount', amount);
+        formData.append('tracking_id', trackingId);
+        formData.append('is_anonymous', isAnonymous ? '1' : '0');
+        formData.append('selected_bank', selectedBank.bank_name);
+        formData.append('bank_reference', bankReference);
+        if (receiptFile) {
+            formData.append('receipt', receiptFile);
+        }
 
         try {
-            await axios.post('http://localhost:8000/api/create_donation.php', donationData);
-            setStep(4);
+            await axios.post('http://localhost:8000/api/create_donation.php', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setStep(3); // success screen is now step 3
         } catch (err) {
             console.error('Error submitting donation:', err);
             alert('Une erreur est survenue lors de la soumission de votre don.');
@@ -133,7 +133,7 @@ const DonateTunnel = () => {
         }
     };
 
-    const copyToClipboard = (text) => navigator.clipboard.writeText(text).catch(() => { });
+
 
     /* ─ Loading ─ */
     if (loading) return (
@@ -151,7 +151,7 @@ const DonateTunnel = () => {
     );
 
     /* ─── Success screen ─── */
-    if (step === 4) return (
+    if (step === 3) return (
         <section className="section bg-background" style={{ minHeight: 'calc(100vh - 70px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
             <div className="dashboard-panel" style={{ maxWidth: 520, width: '100%', textAlign: 'center' }}>
                 <div style={{
@@ -201,11 +201,11 @@ const DonateTunnel = () => {
 
                 {/* Step info */}
                 <p style={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--primary)', marginBottom: '0.5rem' }}>
-                    Étape {step} sur 3 — {stepLabels[step - 1]}
+                    Étape {step} sur 2 — {stepLabels[step - 1]}
                 </p>
-                <StepBar current={step} total={3} />
+                <StepBar current={step} total={2} />
 
-                {/* ═══ STEP 1 — Confirmation ═══ */}
+                {/* ═══ STEP 1 — Confirmation & Bank Selection ═══ */}
                 {step === 1 && (
                     <div className="dashboard-panel" style={{ animation: 'fadeInUp 0.3s ease' }}>
                         <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Confirmer votre don</h2>
@@ -218,18 +218,32 @@ const DonateTunnel = () => {
                                     <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem' }}>{need.type}</div>
                                     <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{need.district}</div>
                                 </div>
-                                <span className="badge badge-open" style={{ fontSize: '0.75rem' }}>🟢 Ouvert</span>
+                                <span className="badge badge-open" style={{ fontSize: '0.75rem', backgroundColor: 'rgba(16,185,129,0.1)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)' }}>
+                                    🟢 Ouvert
+                                </span>
                             </div>
-                            {need.beneficiaries && (
-                                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>👥 {need.beneficiaries} bénéficiaires</div>
+
+                            {need.description && (
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem', lineHeight: '1.5' }}>
+                                    {need.description}
+                                </p>
                             )}
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                                <div style={{ color: 'var(--text-muted)' }}>
+                                    👥 {need.beneficiaries} bénéficiaires
+                                </div>
+                                <div style={{ color: 'var(--secondary)', fontWeight: 700 }}>
+                                    Reste : {(parseFloat(need.required_mru) - parseFloat(need.collected_mru)).toLocaleString()} MRU
+                                </div>
+                            </div>
                         </div>
 
                         {/* Amount field */}
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem' }}>Montant du don</label>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginBottom: '0.75rem' }}>
-                                {[1000, 3000, 5000, 10000].map(s => (
+                                {[100, 300, 500, 1000].map(s => (
                                     <button key={s} onClick={() => setAmount(s.toString())}
                                         className={`btn ${amount === s.toString() ? 'btn-primary' : 'btn-outline'}`}
                                         style={{ fontSize: '0.95rem', padding: '0.65rem' }}>
@@ -261,7 +275,21 @@ const DonateTunnel = () => {
                             </div>
                         </div>
 
-                        <button className="btn btn-primary w-full" disabled={!amount || Number(amount) < 100}
+                        {/* Bank selector */}
+                        <div style={{ marginBottom: '1.75rem' }}>
+                            <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+                                <Building2 size={15} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                                Votre application bancaire
+                            </label>
+                            <select className="filter-select w-full" value={selectedBankId} onChange={e => setSelectedBankId(e.target.value)}>
+                                <option value="">Sélectionner l'application pour le virement…</option>
+                                {bankAccounts.map(b => (
+                                    <option key={b.id} value={b.id}>{b.bank_name}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <button className="btn btn-primary w-full" disabled={!amount || Number(amount) < 100 || !selectedBankId}
                             onClick={() => setStep(2)}
                             style={{ padding: '0.9rem', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                             Continuer <ArrowRight size={18} />
@@ -269,12 +297,12 @@ const DonateTunnel = () => {
                     </div>
                 )}
 
-                {/* ═══ STEP 2 — Virement ═══ */}
+                {/* ═══ STEP 2 — Virement & Reçu ═══ */}
                 {step === 2 && (
                     <div className="dashboard-panel" style={{ animation: 'fadeInUp 0.3s ease' }}>
-                        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Instructions de virement</h2>
+                        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Soumettre votre reçu</h2>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
-                            Effectuez le virement en utilisant exactement les informations ci-dessous.
+                            Effectuez le virement sur le compte ci-dessous et joignez la preuve.
                         </p>
 
                         {/* Amount reminder */}
@@ -283,77 +311,33 @@ const DonateTunnel = () => {
                             <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--primary)' }}>{Number(amount).toLocaleString()} <span style={{ fontSize: '1.2rem' }}>MRU</span></div>
                         </div>
 
-                        {/* Bank details */}
+                        {/* Bank details dynamically populated based on selected bank in Step 1 */}
                         {[
-                            { label: 'Banque', value: 'BCI Mauritanie — Agence Capitale' },
-                            { label: 'Bénéficiaire', value: 'Association IHSAN' },
-                            { label: 'IBAN / RIB', value: 'MR12 0001 0001 2345 6789 012 34' },
-                            { label: 'Code SWIFT', value: 'BCIMMRNU' },
+                            { label: 'Application ciblée', value: bankAccounts.find(b => String(b.id) === String(selectedBankId))?.bank_name || 'N/A' },
+                            { label: 'Numéro de compte', value: bankAccounts.find(b => String(b.id) === String(selectedBankId))?.account_number || 'N/A' },
+                            { label: 'Titulaire du compte', value: bankAccounts.find(b => String(b.id) === String(selectedBankId))?.account_holder || 'N/A' },
                         ].map(row => (
                             <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.9rem 0', borderBottom: '1px solid var(--border)' }}>
                                 <span style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{row.label}</span>
-                                <span style={{ fontWeight: 600, fontSize: '0.9rem', fontFamily: row.label.includes('IBAN') || row.label.includes('SWIFT') ? 'monospace' : 'inherit' }}>{row.value}</span>
+                                <span style={{ fontWeight: 600, fontSize: '0.9rem', fontFamily: row.label.includes('Numéro de compte') ? 'monospace' : 'inherit' }}>{row.value}</span>
                             </div>
                         ))}
 
-                        {/* Reference code */}
-                        <div style={{ marginTop: '1.5rem', background: 'rgba(16,185,129,0.08)', borderRadius: '0.75rem', padding: '1rem 1.25rem', border: '1px solid rgba(16,185,129,0.25)' }}>
-                            <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700, marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                                ⚠️ Libellé obligatoire du virement
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
-                                <span style={{ fontFamily: 'monospace', fontSize: '1.3rem', fontWeight: 800, color: '#10b981', letterSpacing: '0.05em' }}>{donRef}</span>
-                                <button onClick={() => copyToClipboard(donRef)} className="btn btn-outline" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
-                                    <Copy size={14} /> Copier
-                                </button>
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                                Copiez ce code exactement dans le champ <em>libellé / motif</em> de votre virement.
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '2rem' }}>
-                            <button className="btn btn-outline" onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                                <ArrowLeft size={16} /> Retour
-                            </button>
-                            <button className="btn btn-primary" onClick={() => setStep(3)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
-                                J'ai viré <ArrowRight size={16} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* ═══ STEP 3 — Soumettre le reçu ═══ */}
-                {step === 3 && (
-                    <div className="dashboard-panel" style={{ animation: 'fadeInUp 0.3s ease' }}>
-                        <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>Soumettre votre reçu</h2>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.75rem' }}>
-                            Joignez la preuve de votre virement pour déclencher la vérification.
-                        </p>
-
-                        {/* Bank selector */}
-                        <div style={{ marginBottom: '1.25rem' }}>
+                        {/* Bank Reference Input */}
+                        <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
                             <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                <Building2 size={15} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
-                                Votre banque
+                                Référence de la transaction (N° de virement) <span style={{ color: 'var(--danger)' }}>*</span>
                             </label>
-                            <select className="filter-select w-full" value={selectedBank} onChange={e => setSelectedBank(e.target.value)}>
-                                <option value="">Sélectionner votre banque…</option>
-                                {banks.map(b => <option key={b} value={b}>{b}</option>)}
-                            </select>
+                            <input
+                                type="text"
+                                className="filter-select w-full"
+                                placeholder="Entrer le numéro de référence du virement…"
+                                value={bankReference}
+                                onChange={e => setBankReference(e.target.value)}
+                            />
                         </div>
 
-                        {/* Reference number */}
-                        <div style={{ marginBottom: '1.25rem' }}>
-                            <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.5rem' }}>
-                                Numéro de référence du virement
-                            </label>
-                            <input type="text" className="filter-select w-full" placeholder={`Ex: ${donRef}`}
-                                value={refInput} onChange={e => setRefInput(e.target.value)} />
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>
-                                Le code que vous avez mis dans le libellé : <strong style={{ color: 'var(--primary)' }}>{donRef}</strong>
-                            </div>
-                        </div>
+
 
                         {/* Receipt upload */}
                         <div style={{ marginBottom: '1.75rem' }}>
@@ -391,12 +375,12 @@ const DonateTunnel = () => {
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                            <button className="btn btn-outline" onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                            <button className="btn btn-outline" onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
                                 <ArrowLeft size={16} /> Retour
                             </button>
                             <button
                                 className="btn btn-primary"
-                                disabled={!selectedBank || !refInput || !receiptFile || submitting}
+                                disabled={!receiptFile || !bankReference || submitting}
                                 onClick={handleSubmit}
                                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                             >

@@ -10,13 +10,17 @@ $donations = []; // Zéro transaction par défaut
 
 if($db){
     try {
-        // Prêt pour que les coéquipiers injectent les noms de tables et colonnes :
-        // $query = "SELECT tx_id AS id, amount, district, transaction_date AS date, status FROM transactions ORDER BY transaction_date DESC LIMIT 5";
-        // $stmt = $db->prepare($query);
-        // $stmt->execute();
-        // $donations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $query = "SELECT d.id, d.amount, n.district, d.created_at as date, d.status 
+                  FROM donations d
+                  JOIN needs n ON d.need_id = n.id
+                  WHERE d.status IN ('Vérifié', 'Remis', 'complete')
+                  ORDER BY d.created_at DESC 
+                  LIMIT 5";
+        $stmt = $db->prepare($query);
+        $stmt->execute();
+        $donations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch(PDOException $e) {
-        // Repli vers une liste vide gracieusement 
+        // Fallback to empty list gracefully
     }
 }
 

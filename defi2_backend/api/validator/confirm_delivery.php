@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id = $_POST['donation_id'] ?? null;
         $type = $_POST['type'] ?? 'donation'; // 'donation' or 'order'
         $message = $_POST['message'] ?? '';
-        $gps = $_POST['gps'] ?? '';
+        $gps = $_POST['gps'] ?? null;
         
         if (!$id) {
             throw new Exception("ID is required.");
@@ -53,43 +53,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $need_id = $sNeedId->fetchColumn();
 
             if ($need_id) {
-                // 3. Update needs status to 'complete' (Phase 4 Finalization)
-                $uNeed = "UPDATE needs SET status = 'complete' WHERE id = :nid";
+                // 3. Update needs status to 'remise_a_verifier' (Phase 4 Verification)
+                $uNeed = "UPDATE needs SET 
+                            status = 'remise_a_verifier', 
+                            remise_proof_path = :proof, 
+                            remise_message = :msg,
+                            remise_time = NOW() 
+                          WHERE id = :nid";
                 $sNeed = $db->prepare($uNeed);
-                $sNeed->execute([':nid' => $need_id]);
-
-                // 4. Update all associated donations to 'complete'
-                $uDonations = "UPDATE donations SET 
-                               status = 'complete', 
-                               delivery_message = :msg, 
-                               gps_coordinates = :gps, 
-                               delivery_photo_path = :photo,
-                               hedera_sequence = :hedera
-                               WHERE need_id = :nid";
-                $sDonations = $db->prepare($uDonations);
-                $sDonations->execute([
+                $sNeed->execute([
+                    ':proof' => $receipt_path,
                     ':msg' => $message,
-                    ':gps' => $gps,
-                    ':photo' => $receipt_path,
-                    ':hedera' => $hedera_seq,
                     ':nid' => $need_id
                 ]);
 
-                // 5. Notify all donors of this need
-                $qDonors = "SELECT DISTINCT user_id FROM donations WHERE need_id = :nid";
-                $sDonors = $db->prepare($qDonors);
-                $sDonors->execute([':nid' => $need_id]);
-                $donors = $sDonors->fetchAll(PDO::FETCH_ASSOC);
-
-                foreach($donors as $donor) {
-                    $nQuery = "INSERT INTO notifications (user_id, title, message, type) VALUES (:uid, :title, :msg, 'success')";
-                    $nStmt = $db->prepare($nQuery);
-                    $nStmt->execute([
-                        ':uid' => $donor['user_id'],
-                        ':title' => "Besoin Comblé !",
-                        ':msg' => "Le besoin auquel vous avez contribué a été entièrement remis sur le terrain. La photo de preuve est disponible sur votre dashboard.",
-                    ]);
-                }
+                // 4. We DO NOT update donations or notify donors yet. 
+                // That will happen when the admin verifies the remise.
             }
         } else {
             // Legacy / Single Donation Logic
@@ -104,16 +83,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $uQuery = "UPDATE donations SET 
-                       status = 'complete', 
+                       status = 'verifie', 
                        delivery_message = :msg, 
-                       gps_coordinates = :gps, 
                        delivery_photo_path = :photo,
                        hedera_sequence = :hedera
                        WHERE id = :id";
             $uStmt = $db->prepare($uQuery);
             $uStmt->execute([
                 ':msg' => $message,
-                ':gps' => $gps,
                 ':photo' => $receipt_path,
                 ':hedera' => $hedera_seq,
                 ':id' => $id

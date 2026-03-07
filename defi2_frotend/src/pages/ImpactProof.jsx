@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import api from '../api';
 import {
     ShieldCheck, ExternalLink, Share2, Copy, Check,
     MessageCircle, Clock, Hash, ArrowLeft, Star, Layers
@@ -52,13 +53,53 @@ const CopyRow = ({ label, value, mono = true }) => {
     );
 };
 
-/* ═══════════════════════════════ MAIN ═══════════════════════════════ */
+/* ── MAIN ── */
 const ImpactProof = () => {
     const { donationId } = useParams();
-    const proof = getMockProof(donationId);
+    const [proof, setProof] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [linkCopied, setLinkCopied] = useState(false);
 
-    const verifyUrl = `${window.location.origin}/impact/${proof.donationId}`;
+    useEffect(() => {
+        api.get(`/get_donation.php?id=${donationId}`)
+            .then(res => {
+                const d = res.data;
+                setProof({
+                    donationId: d.tracking_id,
+                    needType: d.need_type,
+                    needDescription: d.need_description,
+                    deliveredAt: d.remise_time || d.created_at,
+                    photo: d.remise_proof_path ? `http://localhost:8000/${d.remise_proof_path}` : 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&auto=format&fit=crop&w=900&q=80',
+                    validatorMessage: d.remise_message || 'Un don a été remis grâce à vous.',
+                    validatorName: d.validator_name || 'Validateur IHSAN',
+                    validatorScore: d.validator_score || 94,
+                    beneficiaries: d.beneficiaries || 1,
+                    amountMru: parseFloat(d.amount),
+                    partnerName: d.partner_name,
+                    partnerSpecialties: d.partner_specialties,
+                    partnerPhoto: d.partner_photo ? `http://localhost:8000/${d.partner_photo}` : null,
+                    orderDetails: d.order_details,
+                    orderTime: d.order_time,
+                    hedera: d.hedera
+                });
+            })
+            .catch(err => console.error("Error fetching proof:", err))
+            .finally(() => setLoading(false));
+    }, [donationId]);
+
+    if (loading) return (
+        <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            Chargement de la preuve d'impact…
+        </div>
+    );
+
+    if (!proof) return (
+        <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            Preuve d'impact introuvable.
+        </div>
+    );
+
+    const verifyUrl = `${window.location.origin}/impact/${donationId}`;
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(verifyUrl).catch(() => { });
@@ -75,7 +116,7 @@ const ImpactProof = () => {
 
     return (
         <section className="section bg-background" style={{ minHeight: 'calc(100vh - 70px)' }}>
-            <div className="container" style={{ maxWidth: 780 }}>
+            <div className="container" style={{ maxWidth: 850 }}>
 
                 {/* Breadcrumb */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -97,105 +138,134 @@ const ImpactProof = () => {
                     }}>
                         <ShieldCheck size={36} color="#fff" />
                     </div>
-                    <h1 style={{ fontSize: '1.9rem', fontWeight: 900, marginBottom: '0.5rem' }}>Preuve d'impact vérifiée</h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                        {proof.needType} — {proof.district} &nbsp;·&nbsp; {fmt(proof.deliveredAt)}
+                    <h1 style={{ fontSize: '2.2rem', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>Impact Réel & Vérifié</h1>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
+                        Votre contribution a fait une différence tangible.
                     </p>
                 </div>
 
-                {/* ─── Anonymized photo ─── */}
-                <div className="dashboard-panel" style={{ padding: 0, overflow: 'hidden', marginBottom: '1.5rem' }}>
-                    <div style={{ position: 'relative' }}>
-                        <img
-                            src={proof.photo}
-                            alt="Preuve d'impact — visages floutés"
-                            style={{ width: '100%', height: '320px', objectFit: 'cover', display: 'block' }}
-                        />
-                        {/* Blur overlay on the upper portion (where faces typically are) */}
-                        <div style={{
-                            position: 'absolute', top: 0, left: 0, right: 0, height: '55%',
-                            backdropFilter: 'blur(12px)',
-                            WebkitBackdropFilter: 'blur(12px)',
-                            background: 'rgba(0,0,0,0.05)',
-                        }} />
-                        {/* Badge */}
-                        <div style={{
-                            position: 'absolute', top: '1rem', left: '1rem',
-                            backgroundColor: 'rgba(0,0,0,0.65)',
-                            color: '#fff', padding: '0.35rem 0.75rem',
-                            borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600,
-                            display: 'flex', alignItems: 'center', gap: '0.4rem',
-                            backdropFilter: 'blur(4px)',
-                        }}>
-                            <ShieldCheck size={13} /> Visages anonymisés
-                        </div>
-                        {/* Bottom caption */}
-                        <div style={{
-                            position: 'absolute', bottom: 0, left: 0, right: 0,
-                            background: 'linear-gradient(to top, rgba(0,0,0,0.75), transparent)',
-                            padding: '2rem 1.5rem 1.25rem',
-                            color: '#fff',
-                        }}>
-                            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>
-                                Remise effectuée — {proof.beneficiaries} famille{proof.beneficiaries > 1 ? 's' : ''}
+                {/* ─── Main Content Stack (Simplified for Mobile) ─── */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '2rem' }}>
+
+                    {/* ─── Anonymized photo ─── */}
+                    <div className="dashboard-panel" style={{ padding: 0, overflow: 'hidden' }}>
+                        <div style={{ position: 'relative' }}>
+                            <img
+                                src={proof.photo}
+                                alt="Preuve d'impact — visages floutés"
+                                style={{ width: '100%', height: 'auto', minHeight: '300px', maxHeight: '500px', objectFit: 'cover', display: 'block' }}
+                            />
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, right: 0, height: '40%',
+                                backdropFilter: 'blur(15px)',
+                                WebkitBackdropFilter: 'blur(15px)',
+                                background: 'rgba(255,255,255,0.05)',
+                            }} />
+                            <div style={{
+                                position: 'absolute', top: '1rem', left: '1rem',
+                                backgroundColor: 'rgba(0,0,0,0.7)',
+                                color: '#fff', padding: '0.4rem 0.8rem',
+                                borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600,
+                                display: 'flex', alignItems: 'center', gap: '0.4rem',
+                                backdropFilter: 'blur(4px)',
+                            }}>
+                                <ShieldCheck size={14} /> Visages protégés
                             </div>
-                            <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>{fmt(proof.deliveredAt)}</div>
+                            <div style={{
+                                position: 'absolute', bottom: 0, left: 0, right: 0,
+                                background: 'linear-gradient(to top, rgba(0,0,0,0.9), transparent)',
+                                padding: '2.5rem 1.5rem 1.25rem',
+                                color: '#fff',
+                            }}>
+                                <div style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '0.2rem' }}>
+                                    Remise le {fmt(proof.deliveredAt)}
+                                </div>
+                                <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>{proof.needType} &middot; {proof.beneficiaries} familles</div>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
 
                     {/* ─── Validator message ─── */}
-                    <div className="dashboard-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <h2 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <MessageCircle size={18} color="var(--primary)" /> Message du validateur
-                        </h2>
+                    <div className="dashboard-panel" style={{ padding: '2rem 1.5rem' }}>
+                        <div style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.1em', marginBottom: '1rem' }}>PAROLES DU TERRAIN</div>
                         <blockquote style={{
-                            borderLeft: '3px solid var(--primary)',
-                            paddingLeft: '1rem',
-                            margin: 0,
-                            color: 'var(--text-muted)',
-                            lineHeight: 1.75,
-                            fontSize: '0.95rem',
+                            borderLeft: '4px solid var(--primary)',
+                            paddingLeft: '1.25rem',
+                            margin: '0 0 1.5rem 0',
+                            color: 'var(--text-main)',
+                            lineHeight: 1.7,
+                            fontSize: '1.05rem',
                             fontStyle: 'italic',
                         }}>
                             « {proof.validatorMessage} »
                         </blockquote>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border)' }}>
                             <div style={{
-                                width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+                                width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
                                 background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontWeight: 800, color: '#fff', fontSize: '1rem',
+                                fontWeight: 900, color: '#fff', fontSize: '1.1rem',
                             }}>
                                 {proof.validatorName.charAt(0)}
                             </div>
                             <div>
-                                <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{proof.validatorName}</div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', color: '#f59e0b' }}>
-                                    <Star size={12} fill="#f59e0b" /> {proof.validatorScore}/100
+                                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{proof.validatorName}</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#f59e0b', fontWeight: 700 }}>
+                                    <Star size={12} fill="#f59e0b" /> {proof.validatorScore} pts
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* ─── Stats ─── */}
-                    <div className="dashboard-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <h2 style={{ fontSize: '1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Layers size={18} color="var(--secondary)" /> Récapitulatif
-                        </h2>
-                        {[
-                            { label: 'Montant remis', value: `${proof.amountMru.toLocaleString()} MRU`, color: 'var(--primary)' },
-                            { label: 'Familles bénéficiaires', value: proof.beneficiaries, color: 'var(--secondary)' },
-                            { label: 'Type d\'aide', value: proof.needType, color: 'inherit' },
-                            { label: 'Quartier', value: proof.district, color: 'inherit' },
-                        ].map(row => (
-                            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', padding: '0.5rem 0', borderBottom: '1px solid var(--border)' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>{row.label}</span>
-                                <span style={{ fontWeight: 700, color: row.color }}>{row.value}</span>
+                    {/* ─── Info Grid (2 cols on desktop, 1 on mobile) ─── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                        {/* Donation Stats */}
+                        <div className="dashboard-panel">
+                            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <ShieldCheck size={18} color="var(--primary)" /> Détails du Don
+                            </h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Montant</span>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--primary)' }}>{proof.amountMru.toLocaleString()} MRU</span>
                             </div>
-                        ))}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: '0.5rem', borderTop: '1px solid var(--border)', pt: '0.75rem' }}>
+                                <span style={{ fontSize: '0.8deg', color: 'var(--text-muted)' }}>Suivi</span>
+                                <span style={{ fontWeight: 600, fontFamily: 'monospace', fontSize: '0.9rem' }}>#{proof.donationId}</span>
+                            </div>
+                        </div>
+
+                        {/* Partner / Fulfillment journey */}
+                        {proof.partnerName && (
+                            <div className="dashboard-panel" style={{ borderLeft: '4px solid #8b5cf6' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Clock size={18} color="#8b5cf6" /> Partenaire
+                                </h3>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                                    {proof.partnerPhoto ? (
+                                        <img src={proof.partnerPhoto} alt={proof.partnerName} style={{ width: 40, height: 40, borderRadius: '8px', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: 40, height: 40, borderRadius: '8px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <ShieldCheck size={20} color="#8b5cf6" />
+                                        </div>
+                                    )}
+                                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{proof.partnerName}</div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                    <span style={{ color: 'var(--text-muted)' }}>Commande :</span>
+                                    <span style={{ fontWeight: 600 }}>{proof.orderDetails || 'Standard'}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Need Context */}
+                    <div className="dashboard-panel">
+                        <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Layers size={18} color="var(--secondary)" /> Le Besoin
+                        </h3>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                            {proof.needDescription}
+                        </p>
                     </div>
                 </div>
 

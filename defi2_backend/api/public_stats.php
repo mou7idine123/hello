@@ -16,8 +16,8 @@ $stats = [
 ];
 
 try {
-    // Families helped (sum of beneficiaries for funded needs)
-    $stmt1 = $db->query("SELECT SUM(beneficiaries) as total FROM needs WHERE status = 'Funded'");
+    // Families helped (sum of beneficiaries for completed needs)
+    $stmt1 = $db->query("SELECT SUM(beneficiaries) as total FROM needs WHERE status = 'complete'");
     $res1 = $stmt1->fetch(PDO::FETCH_ASSOC);
     $stats['total_families'] = $res1['total'] ? (int)$res1['total'] : 0;
 
